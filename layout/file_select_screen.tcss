@@ -1,0 +1,26 @@
+.file-select-container {
+    layout: vertical;
+    padding: 1 2;
+    border: round $accent 50%;
+    height: auto;
+    width: 60;
+    margin: 1 2;
+    background: transparent;
+}
+
+.file-select-message {
+    text-align: center;
+    margin: 1 0;
+}
+
+.file-tree {
+    height: 20;
+    border: transparent;
+    margin: 1 0;
+    background:transparent;
+}
+
+Screen {
+    align: center middle;
+}
+
