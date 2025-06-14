@@ -1,0 +1,80 @@
+.disasm-display {
+    background: #0F0F1F;
+    color: #E0E0E0;
+    border: none;
+    scrollbar-background: #1E1E3F;
+    scrollbar-color: #C45AFF;
+    padding: 1;
+}
+
+.disasm-display:focus {
+    border: none;
+    outline: none;
+}
+
+RichLog.disasm-display {
+    background: #0F0F1F;
+    color: #E0E0E0;
+    border: none;
+}
+
+RichLog.disasm-display:focus {
+    border: none;
+    outline: none;
+}
+
+RichLog.disasm-display > * {
+    background: transparent;
+}
+
+.disasm-textarea {
+    background: #0F0F1F;
+    color: #E0E0E0;
+    border: none;
+    scrollbar-background: #1E1E3F;
+    scrollbar-color: #C45AFF;
+}
+
+.disasm-textarea:focus {
+    border: none;
+    outline: none;
+}
+
+.disasm-textarea > .text-area--cursor {
+    background: #C45AFF;
+}
+
+.disasm-textarea > .text-area--selection {
+    background: #404080;
+}
+
+.disasm-textarea .text-area--gutter {
+    background: #0F0F1F;
+    color: #606080;
+    border-right: solid #2D2B55;
+}
+
+.disasm-textarea .text-area--cursor-line {
+    background: #2A2A4A;
+}
+
+TextArea.disasm-textarea {
+    background: #0F0F1F;
+    color: #E0E0E0;
+    border: none;
+}
+
+TextArea.disasm-textarea:focus {
+    border: none;
+    outline: none;
+}
+
+TextArea.disasm-textarea .text-area--cursor {
+    color: #C45AFF;
+    background: #C45AFF;
+}
+
+TextArea.disasm-textarea .text-area--gutter {
+    background: #0F0F1F;
+    color: #606080;
+}
