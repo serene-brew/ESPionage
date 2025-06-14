@@ -1,0 +1,24 @@
+QuitScreen {
+    align: center middle;
+}
+
+.quit-container {
+    width: 40;
+    height: 8;
+    background: transparent;
+    border: round $primary;
+    border-title-align: center;
+    padding: 1;
+}
+
+.quit-message {
+    text-align: center;
+    color: $text;
+    margin-bottom: 1;
+}
+
+.quit-instruction {
+    text-align: center;
+    color: $accent;
+    text-style: bold;
+}
