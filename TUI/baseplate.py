@@ -140,7 +140,7 @@ class baseplate(App):
                             with TabPane("Flasher", id="tab-flasher"):
                                 yield Static("ROM flasher")
                             
-                            with TabPane("Hex-Editor", id="tab-hex-editor"):
+                            with TabPane("Hex-Viewer", id="tab-hex-viewer"):
                                 yield Static("hex editor contents")
                     yield right_bottom
         
