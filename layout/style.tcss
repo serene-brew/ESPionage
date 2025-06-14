@@ -1,0 +1,211 @@
+Screen {
+    layout: vertical;
+}
+
+.main-container {
+    height: 1fr;
+    padding: 1;
+}
+
+.content-horizontal {
+    height: 100%;
+}
+
+.left-panel {
+    width: 67;
+    height: 100%;
+    background: transparent;
+    border: round #6f335a;
+    border-title-align: right;
+    padding: 0;
+}
+
+.right-container {
+    width: 2fr;
+    layout: vertical;
+}
+
+.right-top {
+    height: 1fr;
+    background: transparent;
+    border: round #6f335a;
+    border-title-align: right;
+    padding: 1;
+}
+
+.right-bottom {
+    height: 1fr;
+    background: transparent;
+    border: round #6f335a;
+    border-title-align: right;
+    padding: 0;
+    layout: vertical;
+}
+
+.right-bottom-tabs {
+    height: 1fr;
+    width: 100%;
+    padding: 1;
+}
+
+.input-container {
+    height: 4;
+    width: 100%;
+    background: transparent;
+    border-top: solid $secondary;
+}
+
+
+Static {
+    color: $text;
+    background: transparent;
+}
+
+TabbedContent > ContentSwitcher > ContentTab {
+    background: transparent;
+    color: $text;
+    text-style: none;
+    border-bottom: solid transparent;
+}
+
+TabbedContent > ContentSwitcher > ContentTab:hover {
+    background: $surface;
+    color: $accent;
+}
+
+TabbedContent > ContentSwitcher > ContentTab.-active {
+    background: transparent;
+    color: $success;
+    text-style: bold;
+    border-bottom: solid $success;
+}
+
+TabPane {
+    background: transparent;
+    padding: 1;
+}
+
+TextArea {
+    background: $panel;
+    color: $text;
+    padding: 0 1;
+}
+
+TextArea .textarea--cursor {
+    background: $primary;
+    color: $background;
+}
+
+TextArea .textarea--selection {
+    background: #404080;
+}
+
+TextArea .textarea--line-numbers {
+    background: $background;
+    color: #606080;
+    opacity: 0.8;
+}
+.port-group, .baud-group {
+    margin-bottom: 1;
+    width: 70;
+}
+.firmware-name{
+    width: 70;
+    margin-left: 4;
+    margin-bottom: 0;
+    
+}
+.port-baud-horizontal,{
+    margin: 0 4;
+    height: 25%;
+}
+
+.addresses-horizontal {
+    margin-left: 4;
+}
+
+.address-input {
+    width: 22;
+}
+.baud-radios RadioButton {
+    background: transparent;
+    border: none;
+}
+
+.baud-radios RadioButton:focus {
+    background: transparent;
+}
+
+.baud-radios RadioButton > .toggle--button {
+    background: transparent;
+    border: none;
+}
+.addresses-label{
+    margin-bottom: 1;
+}
+.dumper-verticle{
+    margin: 0;
+    padding: 0;
+}
+.dump-button-container{
+    margin-left: 4;
+}
+.to-label {
+    width: auto;
+    height: 1;
+    text-align: center;
+    content-align: center middle;
+    margin: 0 1;
+}
+
+.dumper-textarea {
+    height: 1fr;
+    margin-left: 3;
+    min-height: 10;
+    background: transparent;
+}
+
+.dumper-textarea:disabled {
+    opacity: 0.8;
+    border: solid $surface;
+}
+
+.empty-state {
+    hatch: right $surface-lighten-1 85%;
+    color: $text-muted;
+    padding: 2;
+    text-align: center;
+    height: 1fr;
+    width: 1fr;
+    background: transparent;
+}
+
+.empty-state-alternative1 {
+    hatch: right white 50%;
+    color: $text-muted;
+    padding: 2;
+    text-align: center;
+    height: 1fr;
+    width: 1fr;
+    background: transparent;
+}
+
+.empty-state-alternative2 {
+    hatch: left $accent 30%;
+    color: $text-accent;
+    padding: 2;
+    text-align: center;
+    height: 1fr;
+    width: 1fr;
+    background: $accent-muted;
+}
+
+.empty-state-galaxy {
+    hatch: right #C45AFF 40%;
+    color: #a684e8;
+    padding: 2;
+    text-align: center;
+    height: 1fr;
+    width: 1fr;
+    background: #1E1E3F;
+}
