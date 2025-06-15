@@ -9,6 +9,9 @@ class baseplate(App):
         ("ctrl+q", "quit", "Quit"),
         ("ctrl+o", "show_file_select_screen", "Open Firmware"),
         ("ctrl+d", "focus_disassembler", "Focus Disassembler"),
+        ("ctrl+h", "focus_hex_viewer", "Focus Hex Viewer"),
+        ("ctrl+r", "focus_reader", "Focus Reader"),
+        ("ctrl+f", "focus_flasher", "Focus Flasher"),
     ]
      
     def on_mount(self) -> None:
@@ -41,6 +44,34 @@ class baseplate(App):
             disasm_display.focus()
         except:
             self.notify("No firmware loaded", severity="warning")
+    def action_focus_hex_viewer(self) -> None:
+        try:
+            hex_display = self.query_one(".hex-display", RichLog)
+            hex_display.focus()
+        except:
+            self.notify("No firmware loaded", severity="warning")
+    
+    def action_focus_reader(self) -> None:
+        try:
+            tabbed_content = self.query_one(".right-bottom TabbedContent")
+            tabbed_content.active = "tab-dumper"
+
+            port_input = self.query_one("#port-input", Input)
+            port_input.focus()
+
+        except Exception as e:
+            self.notify("Could not focus Dumper port input", severity="warning")
+
+    def action_focus_flasher(self) -> None:
+        try:
+            tabbed_content = self.query_one(".right-bottom TabbedContent")
+            tabbed_content.active = "tab-flasher"
+
+            port_input_flasher = self.query_one("#port-input-flasher", Input)
+            port_input_flasher.focus()
+        except Exception as e:
+            self.notify("Could not focus Flasher port input", severity="warning")
+    
 
     def action_show_file_select_screen(self) -> None:
         self.push_screen(FileSelectScreen())
