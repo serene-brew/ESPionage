@@ -209,3 +209,10 @@ TextArea .textarea--line-numbers {
     width: 1fr;
     background: #1E1E3F;
 }
+
+.hex-display {
+    background: transparent;
+    border: none;
+    scrollbar-background: transparent;
+    scrollbar-color: $primary;
+}
