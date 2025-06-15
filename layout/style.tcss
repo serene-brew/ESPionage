@@ -161,7 +161,7 @@ TextArea .textarea--line-numbers {
 .dumper-textarea {
     height: 1fr;
     margin-left: 3;
-    min-height: 10;
+    min-height: 8;
     background: transparent;
 }
 
