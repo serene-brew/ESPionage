@@ -259,7 +259,9 @@ class baseplate(App):
                 auto_scroll=False
             )
             
-            hex_display.write(hex_output)
+            # Apply syntax highlighting to hex output
+            highlighted_hex = self.create_highlighted_hex(hex_output)
+            hex_display.write(highlighted_hex)
             hex_tab.mount(hex_display)
             
         except Exception as e:
