@@ -216,3 +216,75 @@ TextArea .textarea--line-numbers {
     scrollbar-background: transparent;
     scrollbar-color: $primary;
 }
+
+.port-flasher-group, .baud-flasher-group {
+    margin-bottom: 1;
+    width: 70;
+}
+.flasher-firmware-name{
+    width: 70;
+    margin-left: 4;
+    margin-bottom: 0;
+    
+}
+.port-baud-flasher-horizontal,{
+    margin: 0 4;
+    height: 25%;
+}
+
+.addresses-flasher-horizontal {
+    margin-left: 4;
+}
+
+.flash-address-input {
+    width: 22;
+}
+.baud-flasher-radios RadioButton {
+    background: transparent;
+    border: none;
+}
+
+.baud-flasher-radios RadioButton:focus {
+    background: transparent;
+}
+
+.baud-flasher-radios RadioButton > .toggle--button {
+    background: transparent;
+    border: none;
+}
+
+.eeprom-flasher-radios RadioButton {
+    background: transparent;
+    border: none;
+}
+
+.eeprom-flasher-radios RadioButton:focus {
+    background: transparent;
+}
+
+.eeprom-flasher-radios RadioButton > .toggle--button {
+    background: transparent;
+    border: none;
+}
+
+.flash-addresses-label{
+    margin-bottom: 1;
+}
+.flasher-verticle{
+    margin: 0;
+    padding: 0;
+}
+.flash-button-container{
+    margin-left: 4;
+}
+.flasher-textarea {
+    height: 1fr;
+    margin-left: 3;
+    min-height: 8;
+    background: transparent;
+}
+
+.flasher-textarea:disabled {
+    opacity: 0.8;
+    border: solid $surface;
+}
