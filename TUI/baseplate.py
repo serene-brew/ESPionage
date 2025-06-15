@@ -155,7 +155,7 @@ class baseplate(App):
                                         
                     with right_bottom:
                         with TabbedContent():
-                            with TabPane("Dumper", id="tab-dumper"):
+                            with TabPane("Reader", id="tab-dumper"):
                                 #yield Static("Flash memory dumper")
                                 with Vertical(classes="dumper-vertical"):
                                     with Vertical(classes="port-baud-horizontal"):
@@ -183,7 +183,7 @@ class baseplate(App):
                                         yield Label("Firmware Name: ")
                                         yield Input(placeholder=" /path/to/firmware.bin", id="name-input", compact=True)
                                     with Horizontal(classes="dump-button-container"):
-                                        yield Button("Dump Flash", id="dump-button", variant="success", compact=True)
+                                        yield Button("Read Firmware", id="dump-button", variant="success", compact=True)
                                     
                                     yield TextArea(
                                         text="Ready for memory dump...",
