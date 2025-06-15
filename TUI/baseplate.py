@@ -44,25 +44,48 @@ class baseplate(App):
 
     def action_show_file_select_screen(self) -> None:
         self.push_screen(FileSelectScreen())
-    def on_radio_button_changed(self, event: RadioButton.Changed) -> None:
-        if not event.radio_button.id or not event.radio_button.id.startswith("baud-"):
-            return
 
-        if event.radio_button.value:
-            baud_ids = ["baud-9600", "baud-74880", "baud-115200", "baud-921600"]
+    def on_radio_button_changed(self, event: RadioButton.Changed) -> None:    
 
-            for button_id in baud_ids:
-                if button_id != event.radio_button.id:
-                    try:
-                        button = self.query_one(f"#{button_id}", RadioButton)
-                        button.value = False
-                    except:
-                        pass
+        if event.radio_button.id and event.radio_button.id.startswith("baud-"):
+            if event.radio_button.value:
+                baud_ids = ["baud-9600", "baud-74880", "baud-115200", "baud-921600"]
+                for button_id in baud_ids:
+                    if button_id != event.radio_button.id:
+                        try:
+                            button = self.query_one(f"#{button_id}", RadioButton)
+                            button.value = False
+                        except:
+                            pass
 
+        elif event.radio_button.id and event.radio_button.id.startswith("flasher-baud-"):
+            if event.radio_button.value:
+                flasher_baud_ids = ["flasher-baud-115200", "flasher-baud-460800", "flasher-baud-921600"]
+                for button_id in flasher_baud_ids:
+                    if button_id != event.radio_button.id:
+                        try:
+                            button = self.query_one(f"#{button_id}", RadioButton)
+                            button.value = False
+                        except:
+                            pass
+
+        elif event.radio_button.id in ["not-erase-eeprom-flasher", "erase-eeprom-flasher"]:
+            if event.radio_button.value:
+                eeprom_ids = ["not-erase-eeprom-flasher", "erase-eeprom-flasher"]
+                for button_id in eeprom_ids:
+                    if button_id != event.radio_button.id:
+                        try:
+                            button = self.query_one(f"#{button_id}", RadioButton)
+                            button.value = False
+                        except:
+                            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "dump-button":
             self.handle_dump_flash()
+        elif event.button.id == "flash-button":
+            self.handle_flash_firmware()
+
     def compose(self) -> ComposeResult:
         yield Header()
 
@@ -140,14 +163,47 @@ class baseplate(App):
                                         classes="dumper-textarea"
                                     )
                             with TabPane("Flasher", id="tab-flasher"):
-                                yield Static("ROM flasher")
+                                # yield Static("ROM flasher")
+                                with Vertical(classes="flasher-vertical"):
+                                    with Vertical(classes="port-baud-flasher-horizontal"):
+                                        with Horizontal(classes="port-flasher-group"):
+                                            yield Label("Port: ")
+                                            yield Input(placeholder=" e.g COM1 or /dev/ttyUSB0", id="port-input-flasher", compact=True)
+                                        
+                                        with Horizontal(classes="baud-flasher-group"):
+                                            yield Label("Baud Rate:", id="baudrate-flasher-label")
+
+                                            with Horizontal(classes="baud-flasher-radios"):
+                                                yield RadioButton("115200 ", id="flasher-baud-115200", compact=True)
+                                                yield RadioButton("460800 ", id="flasher-baud-460800", compact=True)
+                                                yield RadioButton("921600 ", id="flasher-baud-921600", compact=True)                                            
+                                    
+                                    with Horizontal(classes="addresses-flasher-horizontal"):
+                                        yield Label("Flash Offset: ", classes="flash-addresses-label")
+                                        yield Input(placeholder=" e.g 0x00000000", id="flash-address-input", classes="address-input", compact=True)
+                                        yield Label("  Erase EEPROM:", id="erase-eeprom-flasher-label")
+                                        with Horizontal(classes="eeprom-flasher-radios"):
+                                            yield RadioButton("No ", id="not-erase-eeprom-flasher", compact=True)
+                                            yield RadioButton("Yes ", id="erase-eeprom-flasher", compact=True)
+                                    with Horizontal(classes="flasher-firmware-name"):
+                                        yield Label("Firmware path: ")
+                                        yield Input(placeholder=" /path/to/firmware.bin", id="name-input-flasher", compact=True)
+                                    with Horizontal(classes="flash-button-container"):
+                                        yield Button("Flash Firmware", id="flash-button", variant="success", compact=True)
+                                    
+                                    yield TextArea(
+                                        text="Ready for memory flashing...",
+                                        read_only=True,
+                                        show_line_numbers=False,
+                                        disabled=True,
+                                        id="flasher-output",
+                                        classes="flasher-textarea"
+                                    )
                             
                             with TabPane("Hex-Viewer", id="tab-hex-viewer"):
                                 yield Static("No firmware loaded", classes="empty-state")
                     yield right_bottom
-        
-        yield Footer()
-
+        yield Footer()     
     def handle_hex_view(self) -> None:
         pass
     
