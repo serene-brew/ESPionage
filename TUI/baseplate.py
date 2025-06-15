@@ -1,6 +1,7 @@
 from .components import *
 from .utils import *
 from .espionage import *
+from ROM_rw.hex_viewer import hex_viewer # imported it here
 
 class baseplate(App):
     CSS_PATH = ["../layout/style.tcss", "../layout/disasm_textarea.tcss"]
@@ -16,6 +17,7 @@ class baseplate(App):
 
         self.focused_index = 0
         self.focusable_containers = ["left-panel", "right-top", "right-bottom"]
+        self.current_firmware_path = None  # Added this to track currently loaded firmware
         left_panel = self.query_one(".left-panel")
 
         empty_message = Static(
@@ -141,18 +143,53 @@ class baseplate(App):
                                 yield Static("ROM flasher")
                             
                             with TabPane("Hex-Viewer", id="tab-hex-viewer"):
-                                yield Static("hex editor contents")
+                                yield Static("No firmware loaded", classes="empty-state")
                     yield right_bottom
         
         yield Footer()
 
-    def disassemble_file(self, file_path: str) -> None:
+    def handle_hex_view(self) -> None:
+        pass
+    
+    def _hex_view_worker(self, file_path: str) -> None:
+        try:
+            hex_output = hex_viewer(file_path)
+            self.call_from_thread(self._update_hex_viewer_display, hex_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error generating hex view: {str(e)}", "error")
+    
+    def _update_hex_viewer_display(self, hex_output: str) -> None:
+        try:
+            hex_tab = self.query_one("#tab-hex-viewer")
+            
+            for child in hex_tab.children:
+                child.remove()
+            
+            hex_display = RichLog(
+                classes="hex-display", 
+                highlight=False, 
+                markup=False,
+                auto_scroll=False
+            )
+            
+            hex_display.write(hex_output)
+            hex_tab.mount(hex_display)
+            
+        except Exception as e:
+            self.notify(f"Error updating hex viewer display: {str(e)}", severity="error")
 
+    def disassemble_file(self, file_path: str) -> None:
+        self.current_firmware_path = file_path  # Storing the firmware path
         self.notify("Analyzing Firmware. This may take some time", severity="information")
 
-        thread = threading.Thread(target=self._disassemble_worker, args=(file_path,))
-        thread.daemon = True
-        thread.start()
+        # Start both disassembly and hex viewing
+        disasm_thread = threading.Thread(target=self._disassemble_worker, args=(file_path,))
+        disasm_thread.daemon = True
+        disasm_thread.start()
+        
+        hex_thread = threading.Thread(target=self._hex_view_worker, args=(file_path,))
+        hex_thread.daemon = True
+        hex_thread.start()
     
     def _disassemble_worker(self, file_path: str) -> None:
         try:
