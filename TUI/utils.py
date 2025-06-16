@@ -1,4 +1,4 @@
-from ROM_rw.dumper import ESPLoader, FatalError, write_flash
+from ROM_rw import ESPLoader, FatalError, write_flash
 from argparse import Namespace
 
 def read_esp_flash(port_name, baud_rate, start_address, end_address, firmware_name):
@@ -27,7 +27,7 @@ def read_esp_flash(port_name, baud_rate, start_address, end_address, firmware_na
     except FatalError as e:
         print(f'Failed to read flash: {e}')
         return None
-    
+
 def write_esp_flash(port, baud, offset, firmware_path, erase_eeprom):
     try:
         esp = ESPLoader.detect_chip(port, baud)
