@@ -74,62 +74,83 @@ class SyntaxHighlight(baseplate):
 
     def create_highlighted_hex(self, text: str) -> Text:
         rich_text = Text()
+        
+        # Split into lines for more reliable processing
         lines = text.split('\n')
-
+        
         for i, line in enumerate(lines):
             if i > 0:
                 rich_text.append('\n')
-
+            
             if not line.strip():
                 rich_text.append(line)
                 continue
             
-            # Header lines and separators
-            if line.strip().startswith('='):
-                rich_text.append(line, style=f"dim {galaxy_accent.hex}")
-            elif line.strip().startswith('HEX VIEWER -'):
-                rich_text.append('HEX VIEWER - ', style=galaxy_secondary.hex)
-                filename = line.replace('HEX VIEWER - ', '').strip()
-                rich_text.append(filename, style=galaxy_primary.hex)
-            elif re.match(r'^[0-9A-Fa-f]{8}\s+', line):
-                # Hex dump lines - better pattern matching for offset
-                self.highlight_hex_dump_line(rich_text, line)
+            # Check if this is a hex dump line (8 hex digits at start)
+            hex_dump_match = re.match(r'^([0-9A-Fa-f]{8})(\s+.*)', line)
+            if hex_dump_match:
+                offset = hex_dump_match.group(1)
+                rest_of_line = hex_dump_match.group(2)
+                
+                # Add offset in dim style
+                rich_text.append(offset, style="dim")
+                
+                # Find ASCII section (after position 75 for 24-byte format)
+                if len(rest_of_line) > 75:
+                    hex_part = rest_of_line[:75]
+                    ascii_part = rest_of_line[75:]
+                    
+                    rich_text.append(hex_part)
+                    self.add_ascii_highlighting_simple(rich_text, ascii_part)
+                else:
+                    rich_text.append(rest_of_line)
             else:
-                rich_text.append(line)
-
+                # Handle header lines
+                self.add_header_highlighting_simple(rich_text, line)
+        
         return rich_text
-
-    def highlight_hex_dump_line(self, rich_text: Text, line: str) -> None:
-        """Highlight individual hex dump lines using regex pattern matching"""
-        # Use regex to match the hex dump line format: 8 hex digits + spaces + hex data + ASCII
-        hex_line_pattern = r'^([0-9A-Fa-f]{8})(\s+.*)'
-        match = re.match(hex_line_pattern, line)
-        
-        if not match:
+    
+    def add_header_highlighting_simple(self, rich_text: Text, line: str) -> None:
+        if line.strip().startswith('='):
+            rich_text.append(line, style=f"dim {galaxy_accent.hex}")
+        elif line.strip().startswith('HEX VIEWER -'):
+            rich_text.append('HEX VIEWER - ', style=galaxy_secondary.hex)
+            filename = line.replace('HEX VIEWER - ', '').strip()
+            rich_text.append(filename, style=galaxy_primary.hex)
+        else:
             rich_text.append(line)
-            return
+    
+    def add_ascii_highlighting_simple(self, rich_text: Text, ascii_part: str) -> None:
+        current_group = ""
+        current_type = None
         
-        offset = match.group(1)
-        rest_of_line = match.group(2)
-        
-        # Highlight offset in grey
-        rich_text.append(offset, style="dim")
-        
-        # Process the rest character by character to preserve spacing and highlight dots
-        in_ascii_section = False
-        for i, char in enumerate(rest_of_line):
-            # Detect if we're in the ASCII section (after sufficient hex data spacing)
-            # With 24 bytes per line, ASCII section starts around position 75+
-            if not in_ascii_section and i > 75:  # ASCII section starts after hex data + spacing
-                in_ascii_section = True
+        for char in ascii_part:
+            char_type = 'dot' if char == '.' else 'printable' if char.isprintable() and char not in ' \t' else 'other'
             
-            if char == '.':
-                rich_text.append(char, style="dim")
-            elif in_ascii_section and char.isprintable() and char not in ' \t':
-                # Highlight actual ASCII characters in accent color
-                rich_text.append(char, style=galaxy_accent.hex)
+            if char_type != current_type:
+                # Output the current group
+                if current_group:
+                    if current_type == 'dot':
+                        rich_text.append(current_group, style="dim")
+                    elif current_type == 'printable':
+                        rich_text.append(current_group, style=galaxy_accent.hex)
+                    else:
+                        rich_text.append(current_group)
+                
+                # Start new group
+                current_group = char
+                current_type = char_type
             else:
-                rich_text.append(char)
+                current_group += char
+        
+        # Output final group
+        if current_group:
+            if current_type == 'dot':
+                rich_text.append(current_group, style="dim")
+            elif current_type == 'printable':
+                rich_text.append(current_group, style=galaxy_accent.hex)
+            else:
+                rich_text.append(current_group)
 
     def highlight_misc_line(self, rich_text: Text, line: str) -> None:
         if 'fcn.' in line:
