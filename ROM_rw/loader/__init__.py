@@ -87,24 +87,24 @@ class ESPLoader(object):
         try:
             self._port.baudrate = baud
         except IOError:
-            raise FatalError("Failed to set baud rate %d. The driver may not support this rate." % baud)
+            raise FatalError("\033[33m[!] Failed to set baud rate %d. The driver may not support this rate.\033[0m" % baud)
 
     @staticmethod
     def detect_chip(port=DEFAULT_PORT, baud=ESP_ROM_BAUD, connect_mode='default_reset', trace_enabled=False):
         detect_port = ESPLoader(port, baud, trace_enabled=trace_enabled)
         detect_port.connect(connect_mode)
-        print('Detecting chip type...', end='')
+        print('[~] Detecting chip type', end='')
         sys.stdout.flush()
         date_reg = detect_port.read_reg(ESPLoader.UART_DATA_REG_ADDR)
 
         for cls in [ESP8266ROM, ESP32ROM]:
             if date_reg == cls.DATE_REG_VALUE:
-                # don't connect a second time
+
                 inst = cls(detect_port._port, baud, trace_enabled=trace_enabled)
-                print(' %s' % inst.CHIP_NAME)
+                print('\033[32m[+] Detected Chip Type: %s\033[0m' % inst.CHIP_NAME)
                 return inst
         print('')
-        raise FatalError("Unexpected UART datecode value 0x%08x. Failed to autodetect chip type." % date_reg)
+        raise FatalError("\033[33m[!] Unexpected UART datecode value 0x%08x. Failed to autodetect chip type.\033[0m" % date_reg)
 
     def read(self):
         return next(self._slip_reader)
@@ -168,13 +168,13 @@ class ESPLoader(object):
             if new_timeout != saved_timeout:
                 self._port.timeout = saved_timeout
 
-        raise FatalError("Response doesn't match request")
+        raise FatalError("\033[33m[!] Response doesn't match request\033[0m")
 
     def check_command(self, op_description, op=None, data=b'', chk=0, timeout=DEFAULT_TIMEOUT):
         val, data = self.command(op, data, chk, timeout=timeout)
 
         if len(data) < self.STATUS_BYTES_LENGTH:
-            raise FatalError("Failed to %s. Only got %d byte status response." % (op_description, len(data)))
+            raise FatalError("\033[33mFailed to %s. Only got %d byte status response\033[0m" % (op_description, len(data)))
         status_bytes = data[-self.STATUS_BYTES_LENGTH:]
 
         if byte(status_bytes, 0) != 0:
@@ -220,17 +220,17 @@ class ESPLoader(object):
                 self.sync()
                 return None
             except FatalError as e:
-                if esp32r0_delay:
-                    print('_', end='')
-                else:
-                    print('.', end='')
+#               if esp32r0_delay:
+#                    print('_', end='')
+#                else:
+#                   print('.', end='')
                 sys.stdout.flush()
                 time.sleep(0.05)
                 last_error = e
         return last_error
 
     def connect(self, mode='default_reset'):
-        print('Connecting...', end='')
+        print('[+] Trying to establish connection with target', end='')
         sys.stdout.flush()
         last_error = None
 
@@ -244,12 +244,12 @@ class ESPLoader(object):
                     return
         finally:
             print('')
-        raise FatalError('Failed to connect to %s: %s' % (self.CHIP_NAME, last_error))
+        raise FatalError('\033[33m[!] Failed to connect to %s: %s\033[0m' % (self.CHIP_NAME, last_error))
 
     def read_reg(self, addr):
         val, data = self.command(self.ESP_READ_REG, struct.pack('<I', addr))
         if byte(data, 0) != 0:
-            raise FatalError.WithResult("Failed to read register address %08x" % addr, data)
+            raise FatalError.WithResult("\033[33m[!] Failed to read register address %08x\033[0m" % addr, data)
         return val
 
     def write_reg(self, addr, value, mask=0xFFFFFFFF, delay_us=0):
@@ -283,7 +283,7 @@ class ESPLoader(object):
                            struct.pack('<IIII', erase_size, num_blocks, self.FLASH_WRITE_SIZE, offset),
                            timeout=timeout)
         if size != 0 and not self.IS_STUB:
-            print("Took %.2fs to erase flash block" % (time.time() - t))
+            print("\033[32m[+] Took %.2fs to erase flash block\033[0m" % (time.time() - t))
         return num_blocks
 
     def flash_block(self, data, seq, timeout=DEFAULT_TIMEOUT):
@@ -309,16 +309,16 @@ class ESPLoader(object):
         try:
             return self.FLASH_SIZES[arg]
         except KeyError:
-            raise FatalError("Flash size '%s' is not supported by this chip type. Supported sizes: %s"
+            raise FatalError("[!] Flash size '%s' is not supported by this chip type. Supported sizes: %s"
                              % (arg, ", ".join(self.FLASH_SIZES.keys())))
 
     def run_stub(self, stub=None):
         if stub is None:
             if self.IS_STUB:
-                raise FatalError("Not possible for a stub to load another stub (memory likely to overlap.)")
+                raise FatalError("\033[33m[!] Memory overlap warning: Cannot run stub in stub mode. Use a different loader class.\033[0m")
             stub = self.STUB_CODE
 
-        print("Uploading stub...")
+        print("[+] Uploading stub to target")
         for field in ['text', 'data']:
             if field in stub:
                 offs = stub[field + "_start"]
@@ -329,13 +329,13 @@ class ESPLoader(object):
                     from_offs = seq * self.ESP_RAM_BLOCK
                     to_offs = from_offs + self.ESP_RAM_BLOCK
                     self.mem_block(stub[field][from_offs:to_offs], seq)
-        print("Running stub...")
+        print("[+] Running stub in target memory")
         self.mem_finish(stub['entry'])
 
         p = self.read()
         if p != b'OHAI':
-            raise FatalError("Failed to start stub. Unexpected response: %s" % p)
-        print("Stub running...")
+            raise FatalError("\033[33m[!] Failed to start stub. Unexpected response: %s\033[0m" % p)
+        print("\033[32m[+] Stub started successfully\033[0m")
         return self.STUB_CLASS(self)
 
     @stub_and_esp32_function_only
@@ -350,12 +350,12 @@ class ESPLoader(object):
         else:
             write_size = erase_blocks * self.FLASH_WRITE_SIZE
             timeout = timeout_per_mb(ERASE_REGION_TIMEOUT_PER_MB, write_size)
-        print("Compressed %d bytes to %d..." % (size, compsize))
+        print("[+] Compressed %d bytes to %d" % (size, compsize))
         self.check_command("enter compressed flash mode", self.ESP_FLASH_DEFL_BEGIN,
                            struct.pack('<IIII', write_size, num_blocks, self.FLASH_WRITE_SIZE, offset),
                            timeout=timeout)
         if size != 0 and not self.IS_STUB:
-            print("Took %.2fs to erase flash block" % (time.time() - t))
+            print("[~] Took %.2fs to erase flash block" % (time.time() - t))
         return num_blocks
 
     @stub_and_esp32_function_only
@@ -382,14 +382,14 @@ class ESPLoader(object):
         elif len(res) == 16:
             return hexify(res).lower()
         else:
-            raise FatalError("MD5Sum command returned unexpected result: %r" % res)
+            raise FatalError("\033[33m[!] MD5Sum command returned unexpected result: %r\033[0m" % res)
 
     @stub_and_esp32_function_only
     def change_baud(self, baud):
-        print("Changing baud rate to %d" % baud)
+        print("\033[32m[+] Changing baud rate to %d\033[0m" % baud)
         second_arg = self._port.baudrate if self.IS_STUB else 0
         self.command(self.ESP_CHANGE_BAUDRATE, struct.pack('<II', baud, second_arg))
-        print("Changed.")
+        print("Changed")
         self._set_port_baudrate(baud)
         time.sleep(0.05)
         self.flush_input()
@@ -403,9 +403,9 @@ class ESPLoader(object):
     @stub_function_only
     def erase_region(self, offset, size):
         if offset % self.FLASH_SECTOR_SIZE != 0:
-            raise FatalError("Offset to erase from must be a multiple of 4096")
+            raise FatalError("\033[33m[!] Offset to erase from must be a multiple of 4096\033[0m")
         if size % self.FLASH_SECTOR_SIZE != 0:
-            raise FatalError("Size of data to erase must be a multiple of 4096")
+            raise FatalError("\033[33m[!] Size of data to erase must be a multiple of 4096\033[0m")
         timeout = timeout_per_mb(ERASE_REGION_TIMEOUT_PER_MB, size)
         self.check_command("erase region", self.ESP_ERASE_REGION, struct.pack('<II', offset, size), timeout=timeout)
 
@@ -427,14 +427,14 @@ class ESPLoader(object):
         if progress_fn:
             progress_fn(len(data), length)
         if len(data) > length:
-            raise FatalError('Read more than expected')
+            raise FatalError('\033[33m[!] Read more than expected\033[0m')
         digest_frame = self.read()
         if len(digest_frame) != 16:
-            raise FatalError('Expected digest, got: %s' % hexify(digest_frame))
+            raise FatalError('\033[33m[!] Expected digest, got: %s\033[0m' % hexify(digest_frame))
         expected_digest = hexify(digest_frame).upper()
         digest = hashlib.md5(data).hexdigest().upper()
         if digest != expected_digest:
-            raise FatalError('Digest mismatch: expected %s, got %s' % (expected_digest, digest))
+            raise FatalError('\033[33m[!] Digest mismatch: expected %s, got %s\033[0m' % (expected_digest, digest))
         return data
 
     def flash_spi_attach(self, hspi_arg):
@@ -491,9 +491,9 @@ class ESPLoader(object):
         SPI_USR2_DLEN_SHIFT = 28
 
         if read_bits > 32:
-            raise FatalError("Reading more than 32 bits back from a SPI flash operation is unsupported")
+            raise FatalError("\033[33m[!] Reading more than 32 bits back from a SPI flash operation is unsupported\033[0m")
         if len(data) > 64:
-            raise FatalError("Writing more than 64 bytes of data with one SPI command is unsupported")
+            raise FatalError("\033[33m[!] Writing more than 64 bytes of data with one SPI command is unsupported\033[0m")
 
         data_bits = len(data) * 8
         old_spi_usr = self.read_reg(SPI_USR_REG)
@@ -522,7 +522,7 @@ class ESPLoader(object):
             for _ in range(10):
                 if (self.read_reg(SPI_CMD_REG) & SPI_CMD_USR) == 0:
                     return
-            raise FatalError("SPI command did not complete in time")
+            raise FatalError("\033[33m[!] SPI command did not complete in time\033[0m")
         wait_done()
 
         status = self.read_reg(SPI_W0_REG)
@@ -579,7 +579,7 @@ class ESPLoader(object):
                 self.flash_begin(0, 0)
                 self.flash_finish(True)
             elif self.CHIP_NAME != "ESP8266":
-                raise FatalError("Soft resetting is currently only supported on ESP8266")
+                raise FatalError("\033[33m[!] Soft resetting is currently only supported on ESP8266\033[0m")
             else:
                 self.command(self.ESP_RUN_USER_CODE, wait_response=False)
 class ESPBOOTLOADER(object):
@@ -798,7 +798,7 @@ class ESP8266ROM(ESPLoader):
         elif ((mac1 >> 16) & 0xff) == 1:
             oui = (0xac, 0xd0, 0x74)
         else:
-            raise FatalError("Unknown OUI")
+            raise FatalError("\033[33m[!] Unknown OUI\033[0m")
         return oui + ((mac1 >> 8) & 0xff, mac1 & 0xff, (mac0 >> 24) & 0xff)
 
     def get_erase_size(self, offset, size):
