@@ -145,7 +145,7 @@ class ESP32FirmwareImage(BaseFirmwareImage):
             raise RuntimeError("Invalid value for append_digest field (0x%02x). Should be 0 or 1.", fields[15])
 
         if any(f for f in fields[4:15] if f != 0):
-            print("Warning: some reserved header fields have non-zero values. This image may be from a newer esptool.py?")
+            print("[!] Warning: some reserved header fields have non-zero values")
 
     def save_extended_header(self, save_file):
         def join_byte(ln,hn):
