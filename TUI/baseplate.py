@@ -187,8 +187,8 @@ class baseplate(App):
                                     
                                     yield TextArea(
                                         text="Ready for memory dump...",
-                                        read_only=True,
-                                        show_line_numbers=False,
+                                        read_only=False,
+                                        show_line_numbers=True,
                                         disabled=True,
                                         id="dumper-output",
                                         classes="dumper-textarea"
@@ -225,7 +225,7 @@ class baseplate(App):
                                     yield TextArea(
                                         text="Ready for memory flashing...",
                                         read_only=True,
-                                        show_line_numbers=False,
+                                        show_line_numbers=True,
                                         disabled=True,
                                         id="flasher-output",
                                         classes="flasher-textarea"
