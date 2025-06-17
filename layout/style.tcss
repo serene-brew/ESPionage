@@ -288,3 +288,17 @@ TextArea .textarea--line-numbers {
     opacity: 0.8;
     border: solid $surface;
 }
+
+.dumper-textarea{
+    scrollbar-background: transparent;
+    scrollbar-color: transparent;
+    scrollbar-corner-color: transparent;
+    scrollbar-size: 0 0;
+}
+
+.flasher-textarea{
+    scrollbar-background: transparent;
+    scrollbar-color: transparent;
+    scrollbar-corner-color: transparent;
+    scrollbar-size: 0 0;
+}
