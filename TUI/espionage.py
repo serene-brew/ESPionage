@@ -66,7 +66,7 @@ class ESPionage(SyntaxHighlight):
                     self.current_line = ""
                     self.is_progress_line = False
         def monitor_output():
-            lines = ["Starting flash dump..."]
+            lines = ["ESPionage v1.0.0\nFirmware reader\n===================================================\n"]
 
             while monitor_running.is_set():
                 try:
@@ -99,14 +99,14 @@ class ESPionage(SyntaxHighlight):
 
             queue_capture.flush()
 
-            output_queue.put(('add_line', "Flash dump completed successfully!"))
+            output_queue.put(('add_line', "\033[32m[+] Flash read completed successfully!\033[0m"))
             time.sleep(0.5)
-            self.call_from_thread(self.notify, "Flash dump completed!", severity="information")
+            self.call_from_thread(self.notify, "Flash read completed!", severity="information")
 
         except Exception as e:
             error_msg = f"ERROR: Flash dump failed: {str(e)}"
             output_queue.put(('add_line', error_msg))
-            self.call_from_thread(self.notify, f"Flash dump failed: {str(e)}", severity="error")
+            self.call_from_thread(self.notify, f"\033[33m[!] Flash read failed: {str(e)}\033[0m", severity="error")
 
         finally:
             monitor_running.clear()
@@ -156,8 +156,9 @@ class ESPionage(SyntaxHighlight):
                 return
 
             output_area = self.query_one("#dumper-output", TextArea)
-            output_area.text = "Starting flash dump...\n"
-
+            output_area.text = "ESPionage v1.0.0\n"
+            output_area.text = "Firmware reader\n"
+            output_area.text = "===================================================\n"
             thread = threading.Thread(
                 target=self._dump_flash_worker, 
                 args=(port, baud_rate, start_address, end_address, firmware_name)
