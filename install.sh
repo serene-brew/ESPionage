@@ -88,13 +88,15 @@ echo "Checking and installing required packages..."
 install_packages
 
 echo "Installing Textual library..."
-pip3 install textual --break-system-packages
+pip install textual --break-system-packages
 
 echo "install rich library..."
-pip3 install rich --break-system-packages
+pip install rich --break-system-packages
 
 echo "Installing r2pipe using pip..."
-pip3 install r2pipe --break-system-packages
+pip install r2pipe --break-system-packages
+
+echo "Installing PySeriial using pip..."
+pip install pyserial --break-system-packages
 
 echo "Installation complete"
-

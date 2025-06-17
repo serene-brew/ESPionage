@@ -143,8 +143,6 @@ def write_flash(esp, args):
         except NotImplementedInROMError:
             pass
 
-    print('\nLeaving...')
-
     if esp.IS_STUB:
         esp.flash_begin(0, 0)
         if args.compress:
@@ -153,8 +151,7 @@ def write_flash(esp, args):
             esp.flash_finish(False)
 
     if args.verify:
-        print('Verifying just-written flash...')
-        print('(This option is deprecated, flash contents are now always read back after flashing.)')
+        print('[+] Verifying just-written firmware inside flash memory')
         verify_flash(esp, args)
 
 
@@ -232,10 +229,10 @@ def chip_id(esp, args):
 
 
 def erase_flash(esp, args):
-    print('Erasing flash (this may take a while)...')
+    #print('Erasing flash (this may take a while)...')
     t = time.time()
     esp.erase_flash()
-    print('Chip erase completed successfully in %.1fs' % (time.time() - t))
+    #print('Chip erase completed successfully in %.1fs' % (time.time() - t))
 
 
 def erase_region(esp, args):
@@ -286,7 +283,7 @@ def verify_flash(esp, args):
         image = _update_image_flash_params(esp, address, args, image)
 
         image_size = len(image)
-        print('Verifying 0x%x (%d) bytes @ 0x%08x in flash against %s...' % (image_size, image_size, address, argfile.name))
+        print('[+] Verifying 0x%x (%d) bytes @ 0x%08x in flash against %s' % (image_size, image_size, address, argfile.name))
         digest = esp.flash_md5sum(address, image_size)
         expected_digest = hashlib.md5(image).hexdigest()
         if digest == expected_digest:
@@ -310,7 +307,7 @@ def verify_flash(esp, args):
                 image_byte = ord(image_byte)
             print('   %08x %02x %02x' % (address + d, flash_byte, image_byte))
     if differences:
-        raise FatalError("Verify failed.")
+        raise FatalError("[!] Verify failed.")
 
 
 def read_flash_status(esp, args):
@@ -338,7 +335,6 @@ def expand_file_arguments():
         else:
             new_args.append(arg)
     if expanded:
-        print("esptool.py %s" % (" ".join(new_args[1:])))
         sys.argv = new_args
 
 
@@ -358,9 +354,9 @@ class FlashSizeAction(argparse.Action):
                 '16m-c1': '2MB-c1',
                 '32m-c1': '4MB-c1',
             }[values[0]]
-            print("WARNING: Flash size arguments in megabits like '%s' are deprecated." % (values[0]))
-            print("Please use the equivalent size '%s'." % (value))
-            print("Megabit arguments may be removed in a future release.")
+            print("[!] WARNING: Flash size arguments in megabits like '%s' are deprecated." % (values[0]))
+            print("[!] Please use the equivalent size '%s'." % (value))
+            print("[!] Megabit arguments may be removed in a future release.")
         except KeyError:
             value = values[0]
 
@@ -424,7 +420,7 @@ class AddrFilenamePairAction(argparse.Action):
             sector_start = address & ~(ESPLoader.FLASH_SECTOR_SIZE - 1)
             sector_end = ((address + size + ESPLoader.FLASH_SECTOR_SIZE - 1) & ~(ESPLoader.FLASH_SECTOR_SIZE - 1)) - 1
             if sector_start < end:
-                message = 'Detected overlap at address: 0x%x for file: %s' % (address, argfile.name)
+                message = '[!] Detected overlap at address: 0x%x for file: %s' % (address, argfile.name)
                 raise argparse.ArgumentError(self, message)
             end = sector_end
         setattr(namespace, self.dest, pairs)
