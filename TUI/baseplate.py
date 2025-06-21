@@ -3,6 +3,13 @@ from .utils import *
 from .espionage import *
 from ROM_rw.hex_viewer import hex_viewer # imported it here
 from parser.jump_table import *
+from parser.headers import parse_esp32_header
+from parser.partition_table import parse_esp32_partition_table
+from parser.strings import extract_strings_from_firmware
+from parser.urls import extract_urls_from_firmware
+from parser.files import extract_files_from_firmware
+from textual.containers import ScrollableContainer
+from textual.containers import ScrollableContainer
 class baseplate(App):
     CSS_PATH = ["../layout/style.tcss", "../layout/disasm_textarea.tcss"]
     BINDINGS = [
@@ -148,6 +155,10 @@ class baseplate(App):
                                 yield Static("function call signatures") 
                             with TabPane("Strings", id="tab-strings"):
                                 yield Static("extracted strings from firmware") 
+                            with TabPane("URLs", id="tab-urls"):
+                                yield Static("extracted URLs from firmware")
+                            with TabPane("Files", id="tab-files"):
+                                yield Static("extracted files from firmware")
                     yield right_top
                         
                     right_bottom = Container(classes="right-bottom")
@@ -273,6 +284,41 @@ class baseplate(App):
             self.call_from_thread(self._update_jump_table_display, jump_table_output)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error analyzing jump tables: {str(e)}", "error")
+
+    def _header_worker(self, file_path: str) -> None:
+        try:
+            header_output = parse_esp32_header(file_path)
+            self.call_from_thread(self._update_header_display, header_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error parsing headers: {str(e)}", "error")
+
+    def _partition_worker(self, file_path: str) -> None:
+        try:
+            partition_output = parse_esp32_partition_table(file_path)
+            self.call_from_thread(self._update_partition_display, partition_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error parsing partition table: {str(e)}", "error")
+
+    def _strings_worker(self, file_path: str) -> None:
+        try:
+            strings_output = extract_strings_from_firmware(file_path)
+            self.call_from_thread(self._update_strings_display, strings_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error extracting strings: {str(e)}", "error")
+
+    def _urls_worker(self, file_path: str) -> None:
+        try:
+            urls_output = extract_urls_from_firmware(file_path)
+            self.call_from_thread(self._update_urls_display, urls_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error extracting URLs: {str(e)}", "error")
+
+    def _files_worker(self, file_path: str) -> None:
+        try:
+            files_output = extract_files_from_firmware(file_path)
+            self.call_from_thread(self._update_files_display, files_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error extracting files: {str(e)}", "error")
     def _update_jump_table_display(self, jump_table_output: str) -> None:
         try:
             jump_table_tab = self.query_one("#tab-jump-table")
@@ -290,11 +336,85 @@ class baseplate(App):
 
         except Exception as e:
             self.notify(f"Error updating jump table display: {str(e)}", severity="error")
+
+    def _update_header_display(self, header_output: str) -> None:
+        try:
+            header_tab = self.query_one("#tab-header")
+            header_tab.remove_children()
+
+            if not header_output or len(header_output.strip()) == 0:
+                header_tab.mount(Static("No header found in firmware", classes="empty-state"))
+                return
+
+            scroll_container = ScrollableContainer()
+            header_tab.mount(scroll_container)
+
+            static_content = Static(header_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating header display: {str(e)}", severity="error")
+
+    def _update_partition_display(self, partition_output: str) -> None:
+        try:
+            partition_tab = self.query_one("#tab-partition-table")
+            partition_tab.remove_children()
+
+            scroll_container = ScrollableContainer()
+            partition_tab.mount(scroll_container)
+
+            static_content = Static(partition_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating partition display: {str(e)}", severity="error")
+
+    def _update_strings_display(self, strings_output: str) -> None:
+        try:
+            strings_tab = self.query_one("#tab-strings")
+            strings_tab.remove_children()
+
+            scroll_container = ScrollableContainer()
+            strings_tab.mount(scroll_container)
+
+            static_content = Static(strings_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating strings display: {str(e)}", severity="error")
+
+    def _update_urls_display(self, urls_output: str) -> None:
+        try:
+            urls_tab = self.query_one("#tab-urls")
+            urls_tab.remove_children()
+
+            scroll_container = ScrollableContainer()
+            urls_tab.mount(scroll_container)
+
+            static_content = Static(urls_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating URLs display: {str(e)}", severity="error")
+
+    def _update_files_display(self, files_output: str) -> None:
+        try:
+            files_tab = self.query_one("#tab-files")
+            files_tab.remove_children()
+
+            scroll_container = ScrollableContainer()
+            files_tab.mount(scroll_container)
+
+            static_content = Static(files_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating files display: {str(e)}", severity="error")
     def disassemble_file(self, file_path: str) -> None:
         self.current_firmware_path = file_path
         self.notify("Analyzing Firmware. This may take some time", severity="information")
 
-        # Start both disassembly and hex viewing
+        # Start disassembly, hex viewing, jump table analysis, and header parsing
         disasm_thread = threading.Thread(target=self._disassemble_worker, args=(file_path,))
         disasm_thread.daemon = True
         disasm_thread.start()
@@ -306,6 +426,26 @@ class baseplate(App):
         jump_table_thread = threading.Thread(target=self._jump_table_worker, args=(file_path,))
         jump_table_thread.daemon = True
         jump_table_thread.start()
+
+        header_thread = threading.Thread(target=self._header_worker, args=(file_path,))
+        header_thread.daemon = True
+        header_thread.start()
+
+        partition_thread = threading.Thread(target=self._partition_worker, args=(file_path,))
+        partition_thread.daemon = True
+        partition_thread.start()
+
+        strings_thread = threading.Thread(target=self._strings_worker, args=(file_path,))
+        strings_thread.daemon = True
+        strings_thread.start()
+
+        urls_thread = threading.Thread(target=self._urls_worker, args=(file_path,))
+        urls_thread.daemon = True
+        urls_thread.start()
+
+        files_thread = threading.Thread(target=self._files_worker, args=(file_path,))
+        files_thread.daemon = True
+        files_thread.start()
 
     def _disassemble_worker(self, file_path: str) -> None:
         try:
