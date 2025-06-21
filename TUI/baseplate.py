@@ -2,7 +2,7 @@ from .components import *
 from .utils import *
 from .espionage import *
 from ROM_rw.hex_viewer import hex_viewer # imported it here
-
+from parser.jump_table import *
 class baseplate(App):
     CSS_PATH = ["../layout/style.tcss", "../layout/disasm_textarea.tcss"]
     BINDINGS = [
@@ -136,12 +136,12 @@ class baseplate(App):
                         with TabbedContent():
                             with TabPane("Header", id="tab-header"):
                                 yield Static("Header contents")
-                            
+
                             with TabPane("Partition-Table", id="tab-partition-table"):
                                 yield Static("partition table contents")
                             
-                            with TabPane("Export-table", id="tab-export-table"):
-                                yield Static("export table contents")
+                            with TabPane("Jump-Table", id="tab-jump-table"):
+                                yield Static("Jump table contents")
                             with TabPane("Functions", id="tab-function-table"):
                                 yield Static("function table contents")
                             with TabPane("Call-Signatures", id="tab-call-signatures"):
@@ -267,8 +267,31 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating hex viewer display: {str(e)}", severity="error")
 
+    def _jump_table_worker(self, file_path: str) -> None:
+        try:
+            jump_table_output = ShowJumpTables(file_path)
+            self.call_from_thread(self._update_jump_table_display, jump_table_output)
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Error analyzing jump tables: {str(e)}", "error")
+    def _update_jump_table_display(self, jump_table_output: str) -> None:
+        try:
+            jump_table_tab = self.query_one("#tab-jump-table")
+            jump_table_tab.remove_children()
+
+            if not jump_table_output or len(jump_table_output.strip()) == 0:
+                jump_table_tab.mount(Static("No jump tables found in firmware", classes="empty-state"))
+                return
+
+            scroll_container = ScrollableContainer()
+            jump_table_tab.mount(scroll_container)
+
+            static_content = Static(jump_table_output, expand=True, markup=False)
+            scroll_container.mount(static_content)
+
+        except Exception as e:
+            self.notify(f"Error updating jump table display: {str(e)}", severity="error")
     def disassemble_file(self, file_path: str) -> None:
-        self.current_firmware_path = file_path  # Storing the firmware path
+        self.current_firmware_path = file_path
         self.notify("Analyzing Firmware. This may take some time", severity="information")
 
         # Start both disassembly and hex viewing
@@ -279,7 +302,11 @@ class baseplate(App):
         hex_thread = threading.Thread(target=self._hex_view_worker, args=(file_path,))
         hex_thread.daemon = True
         hex_thread.start()
-    
+
+        jump_table_thread = threading.Thread(target=self._jump_table_worker, args=(file_path,))
+        jump_table_thread.daemon = True
+        jump_table_thread.start()
+
     def _disassemble_worker(self, file_path: str) -> None:
         try:
             disasm_result = disassemble_esp8266_full(str(file_path))
