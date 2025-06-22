@@ -1,13 +1,15 @@
 import struct
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-def parse_esp32_header(firmware_path: str) -> str:
+def parse_esp32_header(firmware_path: str) -> Tuple[str, int]:
+    status = 1
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
         
         if len(firmware_data) < 24:
-            return "Error: Firmware too small to contain a valid ESP32 header"
+            status = 0
+            return "", status
         
         # ESP32 header format: magic(1) + segments(1) + flash_mode(1) + flash_size_freq(1) + entry_point(4)
         header = firmware_data[:8]
@@ -16,6 +18,10 @@ def parse_esp32_header(firmware_path: str) -> str:
         flash_mode = header[2]
         flash_size_freq = header[3]
         entry_point = struct.unpack('<I', header[4:8])[0]
+        
+        if magic != 0xE9:
+            status = 0
+            return "", status
         
         # Extended header information
         extended_header = {}
@@ -89,10 +95,11 @@ def parse_esp32_header(firmware_path: str) -> str:
         output.append(f"File Size:        {len(firmware_data):,} bytes ({len(firmware_data)/1024:.1f} KB)")
         output.append(f"Valid Header:     {'Yes' if magic == 0xE9 else 'No'}")
         
-        return "\n".join(output)
+        return "\n".join(output), status
         
     except Exception as e:
-        return f"Error parsing ESP32 header: {str(e)}"
+        status = 0
+        return f"Error parsing ESP32 header: {str(e)}", status
 
 def _decode_flash_mode(mode: int) -> str:
     modes = {0: 'QIO', 1: 'QOUT', 2: 'DIO', 3: 'DOUT'}
