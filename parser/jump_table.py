@@ -639,11 +639,13 @@ class EnhancedJumpTableFinder:
 
         return "\n".join(hex_lines)
 
-    def print_enhanced_results(self) -> str:
+    def print_enhanced_results(self) -> Tuple[str, int]:
+        status = 1
         output_lines = []
 
         if not self.jump_tables:
-            return "No jump tables found."
+            status = 0
+            return "", status 
 
         output_lines.append(f"Found {len(self.jump_tables)} jump table(s)\n")
 
@@ -688,9 +690,9 @@ class EnhancedJumpTableFinder:
                         output_lines.append(formatted_line.rstrip())
             output_lines.append("")
 
-        return "\n".join(output_lines)
+        return "\n".join(output_lines), status
 
-def ShowJumpTables(firmware_path) -> str:
+def ShowJumpTables(firmware_path) -> Tuple[str, int]:
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
@@ -702,8 +704,8 @@ def ShowJumpTables(firmware_path) -> str:
     finder = EnhancedJumpTableFinder(firmware_data)
     
     jump_tables, analysis_output = finder.find_jump_tables_enhanced()
-    results_output = finder.print_enhanced_results()
+    results_output, status = finder.print_enhanced_results()
     
     # Combine analysis and results
     complete_output = analysis_output + "\n\n" + results_output
-    return complete_output
+    return complete_output, status
