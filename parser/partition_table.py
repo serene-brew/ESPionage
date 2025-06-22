@@ -1,7 +1,8 @@
 import struct
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
-def parse_esp32_partition_table(firmware_path: str) -> str:
+def parse_esp32_partition_table(firmware_path: str) -> Tuple[str, int]:
+    status = 1
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
@@ -32,7 +33,8 @@ def parse_esp32_partition_table(firmware_path: str) -> str:
                 offset = found_offset
                 partition_info["table_offset"] = f"0x{offset:08X}"
             else:
-                return "No valid partition table found in firmware"
+                status = 0
+                return "", status
         
         # Parse partition entries
         partitions = _parse_partition_entries(firmware_data, offset)
@@ -44,7 +46,8 @@ def parse_esp32_partition_table(firmware_path: str) -> str:
         return _format_partition_output(partition_info)
         
     except Exception as e:
-        return f"Error parsing ESP partition table: {str(e)}"
+        status = 0
+        return f"Error parsing ESP partition table: {str(e)}", status
 
 def _looks_like_partition_table(firmware_data: bytes, offset: int) -> bool:
     if offset + 64 > len(firmware_data):
@@ -207,7 +210,8 @@ def _decode_partition_subtype(type_val: int, subtype: int) -> str:
     
     return subtypes.get(subtype, "Unknown")
 
-def _format_partition_output(partition_info: Dict) -> str:
+def _format_partition_output(partition_info: Dict) -> Tuple[str, int]:
+    status = 1
     output = []
     output.append("=" * 60)
     output.append("ESP PARTITION TABLE ANALYSIS")
@@ -215,8 +219,8 @@ def _format_partition_output(partition_info: Dict) -> str:
     output.append("")
     
     if not partition_info["found"]:
-        output.append("No valid partition table found in firmware")
-        return "\n".join(output)
+        status = 0
+        return "", status
     
     output.append(f"Table Offset: {partition_info['table_offset']}")
     output.append(f"Partitions Found: {len(partition_info['partitions'])}")
@@ -236,4 +240,4 @@ def _format_partition_output(partition_info: Dict) -> str:
         output.append(f"Flags:          {part['flags']}")
         output.append("")
     
-    return "\n".join(output)
+    return "\n".join(output), status
