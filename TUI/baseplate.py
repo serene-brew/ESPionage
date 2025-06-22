@@ -34,12 +34,23 @@ class baseplate(App):
         self.current_firmware_path = None  # Added this to track currently loaded firmware
         left_panel = self.query_one(".left-panel")
 
+        # empty_message = Static(
+        #     "No firmware loaded\n\n" +
+        #     "Press Ctrl+R to focus firmware reader\n" +
+        #     "and extract firmware out of memory\n\n"+
+        #     "Press Ctrl+F to focus firmware flasher\n" +
+        #     "and write firmware to memory\n\n"+
+        #     "Press Ctrl+H to focus hex viewer\n" +
+        #     "once a firmware is loaded\n\n"+
+        #     "ESPionage v1.0.0\n"+
+        #     "by Serene-Brew ",
+        #     classes="empty-state"
+        # )
         empty_message = Static(
             "No firmware loaded\n\n" +
-            "Press Ctrl+O to load a firmware file\n" +
-            "for disassembly & analysis\n\n"+
-            "ESPionage v1.0.0\n"+
-            "by Serene-Brew ",
+            "Press Ctrl+R/Ctrl+F to focus\n" +
+            "firmware reader/flasher and extract firmware\n"+
+            "out of memory or write into memory\n\n",
             classes="empty-state"
         )
         left_panel.mount(empty_message)
@@ -146,23 +157,77 @@ class baseplate(App):
                     with right_top:
                         with TabbedContent():
                             with TabPane("Header", id="tab-header"):
-                                yield Static("Header contents")
-
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Partition-Table", id="tab-partition-table"):
-                                yield Static("partition table contents")
-                            
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Jump-Table", id="tab-jump-table"):
-                                yield Static("Jump table contents")
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Functions", id="tab-function-table"):
-                                yield Static("function table contents")
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Call-Signatures", id="tab-call-signatures"):
-                                yield Static("function call signatures") 
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Strings", id="tab-strings"):
-                                yield Static("extracted strings from firmware") 
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                ) 
                             with TabPane("URLs", id="tab-urls"):
-                                yield Static("extracted URLs from firmware")
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                             with TabPane("Files", id="tab-files"):
-                                yield Static("extracted files from firmware")
+                                yield Static(
+                                    "No firmware loaded\n\n" +
+                                    "Press Ctrl+O to load a firmware file\n" +
+                                    "for disassembly & analysis\n\n"+
+                                    "ESPionage v1.0.0\n"+
+                                    "by Serene-Brew ",
+                                    classes="empty-state"
+                                )
                     yield right_top
                         
                     right_bottom = Container(classes="right-bottom")
