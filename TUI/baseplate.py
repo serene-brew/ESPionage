@@ -34,18 +34,6 @@ class baseplate(App):
         self.current_firmware_path = None  # Added this to track currently loaded firmware
         left_panel = self.query_one(".left-panel")
 
-        # empty_message = Static(
-        #     "No firmware loaded\n\n" +
-        #     "Press Ctrl+R to focus firmware reader\n" +
-        #     "and extract firmware out of memory\n\n"+
-        #     "Press Ctrl+F to focus firmware flasher\n" +
-        #     "and write firmware to memory\n\n"+
-        #     "Press Ctrl+H to focus hex viewer\n" +
-        #     "once a firmware is loaded\n\n"+
-        #     "ESPionage v1.0.0\n"+
-        #     "by Serene-Brew ",
-        #     classes="empty-state"
-        # )
         empty_message = Static(
             "No firmware loaded\n\n" +
             "Press Ctrl+R/Ctrl+F to focus\n" +
@@ -334,43 +322,43 @@ class baseplate(App):
             self.call_from_thread(self.notify, f"Error disassembling file: {str(e)}", "error")
     def _jump_table_worker(self, file_path: str) -> None:
         try:
-            jump_table_output = ShowJumpTables(file_path)
-            self.call_from_thread(self._update_jump_table_display, jump_table_output)
+            jump_table_output, status = ShowJumpTables(file_path)
+            self.call_from_thread(self._update_jump_table_display, jump_table_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error analyzing jump tables: {str(e)}", "error")
 
     def _header_worker(self, file_path: str) -> None:
         try:
-            header_output = parse_esp32_header(file_path)
-            self.call_from_thread(self._update_header_display, header_output)
+            header_output, status = parse_esp32_header(file_path)
+            self.call_from_thread(self._update_header_display, header_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error parsing headers: {str(e)}", "error")
 
     def _partition_worker(self, file_path: str) -> None:
         try:
-            partition_output = parse_esp32_partition_table(file_path)
-            self.call_from_thread(self._update_partition_display, partition_output)
+            partition_output, status = parse_esp32_partition_table(file_path)
+            self.call_from_thread(self._update_partition_display, partition_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error parsing partition table: {str(e)}", "error")
 
     def _strings_worker(self, file_path: str) -> None:
         try:
-            strings_output = extract_strings_from_firmware(file_path)
-            self.call_from_thread(self._update_strings_display, strings_output)
+            strings_output, status = extract_strings_from_firmware(file_path)
+            self.call_from_thread(self._update_strings_display, strings_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error extracting strings: {str(e)}", "error")
 
     def _urls_worker(self, file_path: str) -> None:
         try:
-            urls_output = extract_urls_from_firmware(file_path)
-            self.call_from_thread(self._update_urls_display, urls_output)
+            urls_output, status = extract_urls_from_firmware(file_path)
+            self.call_from_thread(self._update_urls_display, urls_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error extracting URLs: {str(e)}", "error")
 
     def _files_worker(self, file_path: str) -> None:
         try:
-            files_output = extract_files_from_firmware(file_path)
-            self.call_from_thread(self._update_files_display, files_output)
+            files_output, status = extract_files_from_firmware(file_path)
+            self.call_from_thread(self._update_files_display, files_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error extracting files: {str(e)}", "error")
 #######################################################################################################
@@ -422,16 +410,15 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating hex viewer display: {str(e)}", severity="error")
     
-    def _update_jump_table_display(self, jump_table_output: str) -> None:
+    def _update_jump_table_display(self, jump_table_output: str, status: int) -> None:
         try:
             jump_table_tab = self.query_one("#tab-jump-table")
             jump_table_tab.remove_children()
     
-            if not jump_table_output or len(jump_table_output.strip()) == 0:
+            if not status:
                 jump_table_tab.mount(Static("No jump tables found in firmware", classes="empty-state"))
                 return
-    
-            # Convert ANSI directly to Rich Text without using Console
+            
             rich_text = Text.from_ansi(jump_table_output)
     
             scroll_container = ScrollableContainer()
@@ -448,12 +435,12 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating jump table display: {str(e)}", severity="error")
 
-    def _update_header_display(self, header_output: str) -> None:
+    def _update_header_display(self, header_output: str, status: int) -> None:
         try:
             header_tab = self.query_one("#tab-header")
             header_tab.remove_children()
 
-            if not header_output or len(header_output.strip()) == 0:
+            if not status:
                 header_tab.mount(Static("No header found in firmware", classes="empty-state"))
                 return
 
@@ -466,10 +453,13 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating header display: {str(e)}", severity="error")
 
-    def _update_partition_display(self, partition_output: str) -> None:
+    def _update_partition_display(self, partition_output: str, status: int) -> None:
         try:
             partition_tab = self.query_one("#tab-partition-table")
             partition_tab.remove_children()
+            if not status:
+                partition_tab.mount(Static("No valid partition table found in firmware", classes="empty-state"))
+                return
 
             scroll_container = ScrollableContainer()
             partition_tab.mount(scroll_container)
@@ -480,11 +470,13 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating partition display: {str(e)}", severity="error")
 
-    def _update_strings_display(self, strings_output: str) -> None:
+    def _update_strings_display(self, strings_output: str, status: int) -> None:
         try:
             strings_tab = self.query_one("#tab-strings")
             strings_tab.remove_children()
-
+            if not status:
+                strings_tab.mount(Static("No valid string table found in firmware", classes="empty-state"))
+                return
             scroll_container = ScrollableContainer()
             strings_tab.mount(scroll_container)
 
@@ -494,11 +486,13 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating strings display: {str(e)}", severity="error")
 
-    def _update_urls_display(self, urls_output: str) -> None:
+    def _update_urls_display(self, urls_output: str, status: int) -> None:
         try:
             urls_tab = self.query_one("#tab-urls")
             urls_tab.remove_children()
-
+            if not status:
+                urls_tab.mount(Static("No valid URLs extracted from string table", classes="empty-state"))
+                return
             scroll_container = ScrollableContainer()
             urls_tab.mount(scroll_container)
 
@@ -508,11 +502,13 @@ class baseplate(App):
         except Exception as e:
             self.notify(f"Error updating URLs display: {str(e)}", severity="error")
 
-    def _update_files_display(self, files_output: str) -> None:
+    def _update_files_display(self, files_output: str, status: int) -> None:
         try:
             files_tab = self.query_one("#tab-files")
             files_tab.remove_children()
-
+            if not status:
+                files_tab.mount(Static("No files were found in firmware", classes="empty-state"))
+                return
             scroll_container = ScrollableContainer()
             files_tab.mount(scroll_container)
 
