@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Tuple
 
-def extract_files_from_firmware(firmware_path: str) -> str:
+def extract_files_from_firmware(firmware_path: str) -> Tuple[str, int]:
+    status = 1
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
@@ -14,7 +15,8 @@ def extract_files_from_firmware(firmware_path: str) -> str:
         return _format_files_output(files)
         
     except Exception as e:
-        return f"Error extracting files: {str(e)}"
+        status = 0
+        return f"Error extracting files: {str(e)}", status
 
 def _extract_strings(firmware_data: bytes, min_length: int = 4, max_length: int = 200) -> List[str]:
     strings = []
@@ -47,7 +49,8 @@ def _extract_files(strings: List[str]) -> List[str]:
     
     return list(set(files))  # Remove duplicates
 
-def _format_files_output(files: List[str]) -> str:
+def _format_files_output(files: List[str]) -> Tuple[str, int]:
+    status = 1
     output = []
     output.append("=" * 60)
     output.append("ESP FIRMWARE FILES ANALYSIS")
@@ -55,8 +58,8 @@ def _format_files_output(files: List[str]) -> str:
     output.append("")
     
     if not files:
-        output.append("No file paths found in firmware")
-        return "\n".join(output)
+        status = 0
+        return "", status
     
     output.append(f"Total File Paths Found: {len(files)}")
     output.append("")
@@ -84,4 +87,4 @@ def _format_files_output(files: List[str]) -> str:
             output.append(f"  - {file_path}")
         output.append("")
     
-    return "\n".join(output)
+    return "\n".join(output), status
