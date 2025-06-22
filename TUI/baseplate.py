@@ -9,7 +9,11 @@ from parser.strings import extract_strings_from_firmware
 from parser.urls import extract_urls_from_firmware
 from parser.files import extract_files_from_firmware
 from textual.containers import ScrollableContainer
-from textual.containers import ScrollableContainer
+
+from rich.console import Console
+from rich.text import Text
+from io import StringIO
+
 class baseplate(App):
     CSS_PATH = ["../layout/style.tcss", "../layout/disasm_textarea.tcss"]
     BINDINGS = [
@@ -248,36 +252,21 @@ class baseplate(App):
         yield Footer()     
     def handle_hex_view(self) -> None:
         pass
-    
+
+############################################THREAD WORKERS############################################
     def _hex_view_worker(self, file_path: str) -> None:
         try:
             hex_output = hex_viewer(file_path)
             self.call_from_thread(self._update_hex_viewer_display, hex_output)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error generating hex view: {str(e)}", "error")
-    
-    def _update_hex_viewer_display(self, hex_output: str) -> None:
+    def _disassemble_worker(self, file_path: str) -> None:
         try:
-            hex_tab = self.query_one("#tab-hex-viewer")
-            
-            for child in hex_tab.children:
-                child.remove()
-            
-            hex_display = RichLog(
-                classes="hex-display", 
-                highlight=False, 
-                markup=False,
-                auto_scroll=False
-            )
-            
-            # Apply syntax highlighting to hex output
-            highlighted_hex = self.create_highlighted_hex(hex_output)
-            hex_display.write(highlighted_hex)
-            hex_tab.mount(hex_display)
+            disasm_result = disassemble_esp8266_full(str(file_path))
+            self.call_from_thread(self._update_disassembly_display, disasm_result, file_path)
             
         except Exception as e:
-            self.notify(f"Error updating hex viewer display: {str(e)}", severity="error")
-
+            self.call_from_thread(self.notify, f"Error disassembling file: {str(e)}", "error")
     def _jump_table_worker(self, file_path: str) -> None:
         try:
             jump_table_output = ShowJumpTables(file_path)
@@ -319,21 +308,78 @@ class baseplate(App):
             self.call_from_thread(self._update_files_display, files_output)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error extracting files: {str(e)}", "error")
+#######################################################################################################
+############################################THREAD UPDATERS############################################
+    def _update_disassembly_display(self, disasm_result: str, file_path: str) -> None:
+        try:
+            left_panel = self.query_one(".left-panel")
+            left_panel.border_subtitle = os.path.basename(file_path)
+
+            for child in left_panel.children:
+                child.remove()
+            disasm_display = RichLog(
+                classes="disasm-display", 
+                highlight=True, 
+                markup=True,
+                auto_scroll=False
+            )
+
+            highlighted_text = self.create_highlighted_disasm(disasm_result)
+            disasm_display.write(highlighted_text)
+
+            left_panel.mount(disasm_display)
+            
+            self.notify("Firmware analysis complete!", severity="information")
+            disasm_display.focus()
+
+        except Exception as e:
+            self.notify(f"Error updating display: {str(e)}", severity="error")
+
+    def _update_hex_viewer_display(self, hex_output: str) -> None:
+        try:
+            hex_tab = self.query_one("#tab-hex-viewer")
+            
+            for child in hex_tab.children:
+                child.remove()
+            
+            hex_display = RichLog(
+                classes="hex-display", 
+                highlight=False, 
+                markup=False,
+                auto_scroll=False
+            )
+            
+            # Apply syntax highlighting to hex output
+            highlighted_hex = self.create_highlighted_hex(hex_output)
+            hex_display.write(highlighted_hex)
+            hex_tab.mount(hex_display)
+            
+        except Exception as e:
+            self.notify(f"Error updating hex viewer display: {str(e)}", severity="error")
+    
     def _update_jump_table_display(self, jump_table_output: str) -> None:
         try:
             jump_table_tab = self.query_one("#tab-jump-table")
             jump_table_tab.remove_children()
-
+    
             if not jump_table_output or len(jump_table_output.strip()) == 0:
                 jump_table_tab.mount(Static("No jump tables found in firmware", classes="empty-state"))
                 return
-
+    
+            # Convert ANSI directly to Rich Text without using Console
+            rich_text = Text.from_ansi(jump_table_output)
+    
             scroll_container = ScrollableContainer()
             jump_table_tab.mount(scroll_container)
-
-            static_content = Static(jump_table_output, expand=True, markup=False)
+    
+            static_content = Static(
+                rich_text,
+                expand=False,
+                markup=True,
+                classes="jump-table-content"
+            )
             scroll_container.mount(static_content)
-
+    
         except Exception as e:
             self.notify(f"Error updating jump table display: {str(e)}", severity="error")
 
@@ -410,6 +456,7 @@ class baseplate(App):
 
         except Exception as e:
             self.notify(f"Error updating files display: {str(e)}", severity="error")
+#######################################################################################################
     def disassemble_file(self, file_path: str) -> None:
         self.current_firmware_path = file_path
         self.notify("Analyzing Firmware. This may take some time", severity="information")
@@ -446,36 +493,3 @@ class baseplate(App):
         files_thread = threading.Thread(target=self._files_worker, args=(file_path,))
         files_thread.daemon = True
         files_thread.start()
-
-    def _disassemble_worker(self, file_path: str) -> None:
-        try:
-            disasm_result = disassemble_esp8266_full(str(file_path))
-            self.call_from_thread(self._update_disassembly_display, disasm_result, file_path)
-            
-        except Exception as e:
-            self.call_from_thread(self.notify, f"Error disassembling file: {str(e)}", "error")
-    
-    def _update_disassembly_display(self, disasm_result: str, file_path: str) -> None:
-        try:
-            left_panel = self.query_one(".left-panel")
-            left_panel.border_subtitle = os.path.basename(file_path)
-
-            for child in left_panel.children:
-                child.remove()
-            disasm_display = RichLog(
-                classes="disasm-display", 
-                highlight=True, 
-                markup=True,
-                auto_scroll=False
-            )
-
-            highlighted_text = self.create_highlighted_disasm(disasm_result)
-            disasm_display.write(highlighted_text)
-
-            left_panel.mount(disasm_display)
-            
-            self.notify("Firmware analysis complete!", severity="information")
-            disasm_display.focus()
-
-        except Exception as e:
-            self.notify(f"Error updating display: {str(e)}", severity="error")
