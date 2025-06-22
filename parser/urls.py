@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Tuple
 
-def extract_urls_from_firmware(firmware_path: str) -> str:
+def extract_urls_from_firmware(firmware_path: str) -> Tuple[str, int]:
+    status = 1
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
@@ -14,7 +15,8 @@ def extract_urls_from_firmware(firmware_path: str) -> str:
         return _format_urls_output(urls)
         
     except Exception as e:
-        return f"Error extracting URLs: {str(e)}"
+        status = 0
+        return f"Error extracting URLs: {str(e)}", status
 
 def _extract_strings(firmware_data: bytes, min_length: int = 4, max_length: int = 200) -> List[str]:
     strings = []
@@ -46,7 +48,8 @@ def _extract_urls(strings: List[str]) -> List[str]:
     
     return list(set(urls))  # Remove duplicates
 
-def _format_urls_output(urls: List[str]) -> str:
+def _format_urls_output(urls: List[str]) -> Tuple[str, int]:
+    status = 1
     output = []
     output.append("=" * 60)
     output.append("ESP FIRMWARE URLs ANALYSIS")
@@ -54,8 +57,8 @@ def _format_urls_output(urls: List[str]) -> str:
     output.append("")
     
     if not urls:
-        output.append("No URLs found in firmware")
-        return "\n".join(output)
+        status = 0
+        return "", status
     
     output.append(f"Total URLs Found: {len(urls)}")
     output.append("")
@@ -65,4 +68,4 @@ def _format_urls_output(urls: List[str]) -> str:
     for i, url in enumerate(urls, 1):
         output.append(f"{i:3d}. {url}")
     
-    return "\n".join(output)
+    return "\n".join(output), status
