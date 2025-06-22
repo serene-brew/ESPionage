@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
-def extract_strings_from_firmware(firmware_path: str) -> str:
+def extract_strings_from_firmware(firmware_path: str) -> Tuple[str, int]:
+    status = 1
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
@@ -14,7 +15,8 @@ def extract_strings_from_firmware(firmware_path: str) -> str:
         return _format_strings_output(string_analysis, len(strings))
         
     except Exception as e:
-        return f"Error extracting strings: {str(e)}"
+        status = 0
+        return f"Error extracting strings: {str(e)}", status
 
 def _extract_strings(firmware_data: bytes, min_length: int = 4, max_length: int = 200) -> List[str]:
     strings = []
@@ -84,7 +86,11 @@ def _analyze_strings(strings: List[str]) -> Dict:
     
     return analysis
 
-def _format_strings_output(string_analysis: Dict, total_strings: int) -> str:
+def _format_strings_output(string_analysis: Dict, total_strings: int) -> Tuple[str, int]:
+    status = 1
+    if total_strings == 0:
+        status = 0
+        return "", status
     output = []
     output.append("=" * 60)
     output.append("ESP FIRMWARE STRINGS ANALYSIS")
@@ -112,4 +118,4 @@ def _format_strings_output(string_analysis: Dict, total_strings: int) -> str:
                 output.append(f"  - {item[:80]}{'...' if len(item) > 80 else ''}")
             output.append("")
     
-    return "\n".join(output)
+    return "\n".join(output), status
