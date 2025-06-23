@@ -464,12 +464,12 @@ class EnhancedJumpTableFinder:
     
     def find_jump_tables_enhanced(self) -> Tuple[List[JumpTable], str]:
         analysis_output = []
-        analysis_output.append("\033[32m==============================================================================================\033[0m")
-        analysis_output.append(f"Analyzing firmware: {len(self.firmware_data)} bytes ({self.chip_type.value})")
+        analysis_output.append("\033[38;5;169m==============================================================================================\033[0m")
+        analysis_output.append(f"\033[38;5;72mAnalyzing firmware: {len(self.firmware_data)} bytes ({self.chip_type.value})")
         analysis_output.append(f"Base address: 0x{self.base_address:08X}")
 
         l32r_sequences = self.find_enhanced_l32r_sequences()
-        analysis_output.append(f"Found {len(l32r_sequences)} L32R sequences with context")
+        analysis_output.append(f"Found {len(l32r_sequences)} L32R sequences with context\033[0m")
 
         jump_tables = []
         processed_tables = set()
@@ -622,7 +622,7 @@ class EnhancedJumpTableFinder:
                 if offset + j < len(self.firmware_data):
                     byte_val = self.firmware_data[offset + j]
                     hex_bytes.append(f"{byte_val:02x}")
-                    ascii_repr.append(chr(byte_val) if 32 <= byte_val <= 126 else '.')
+                    ascii_repr.append("\033[38;5;67m"+chr(byte_val)+"\033[0m" if 32 <= byte_val <= 126 else '\033[38;5;244m.\033[0m')
                 else:
                     hex_bytes.append("  ")
                     ascii_repr.append(" ")
@@ -634,8 +634,8 @@ class EnhancedJumpTableFinder:
             line_end = min(offset + 16, len(self.firmware_data))
             is_table_line = not (line_end <= table_start or line_start >= table_end)
 
-            marker = ">>> " if is_table_line else "    "
-            hex_lines.append(f"{marker}{offset:08x}: {hex_str} |{ascii_str}|")
+            marker = "\033[38;5;67m>>> \033[0m" if is_table_line else "    "
+            hex_lines.append(f"{marker}\033[38;5;246m{offset:08x}\033[0m: {hex_str} |{ascii_str}|")
 
         return "\n".join(hex_lines)
 
@@ -647,20 +647,20 @@ class EnhancedJumpTableFinder:
             status = 0
             return "", status 
 
-        output_lines.append(f"Found {len(self.jump_tables)} jump table(s)\n")
+        output_lines.append(f"\033[38;5;183mFound {len(self.jump_tables)} jump table(s)\n\033[0m")
 
         for i, jt in enumerate(self.jump_tables, 1):
-            output_lines.append("----------------------------------------------------------------------------------------------")
-            output_lines.append(f"Jump Table #{i}:")
-            output_lines.append(f"  Location: 0x{jt.base_address:08X} (offset 0x{jt.base_offset:08X})")
-            output_lines.append(f"  Entries: {len(jt.entries)}")
-            output_lines.append(f"  Confidence: {jt.confidence:.2f}")
+            output_lines.append("\033[38;5;169m----------------------------------------------------------------------------------------------\033[0m")
+            output_lines.append(f"\033[38;5;220mJump Table #{i}:\033[0m")
+            output_lines.append(f"\033[38;5;219m  Location:\033[38;5;245m 0x{jt.base_address:08X} (offset 0x{jt.base_offset:08X})")
+            output_lines.append(f"\033[38;5;219m  Entries:\033[38;5;245m {len(jt.entries)}")
+            output_lines.append(f"\033[38;5;219m  Confidence:\033[38;5;245m {jt.confidence:.2f}\033[0m")
 
             if jt.switch_instruction_offset >= 0:
                 switch_addr = self.base_address + jt.switch_instruction_offset
-                output_lines.append(f"  Switch instruction: 0x{switch_addr:08X}")
+                output_lines.append(f"\033[38;5;116m  Switch instruction: 0x{switch_addr:08X}")
 
-            output_lines.append(f"  Context (offset 0x{jt.base_offset:08X}):")
+            output_lines.append(f"  Context (offset 0x{jt.base_offset:08X}):\033[0m")
             # Get hex dump as string instead of printing
             hex_dump = self._get_context_hex_dump_string(jt.base_offset, len(jt.entries) * 4)
             output_lines.append(hex_dump)
@@ -680,8 +680,7 @@ class EnhancedJumpTableFinder:
                         idx = col * entries_per_col + row
                         if idx < len(jt.entries):
                             entry = jt.entries[idx]
-                            confidence_str = f" (conf: {entry.confidence:.2f})" if entry.confidence < 1.0 else ""
-                            line_parts.append(f"[{idx:2d}] 0x{entry.target_address:08X}{confidence_str}")
+                            line_parts.append(f"[{idx:2d}] 0x{entry.target_address:08X}")
                         else:
                             line_parts.append("")  # Empty space for alignment
 
