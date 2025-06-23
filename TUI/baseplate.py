@@ -171,24 +171,6 @@ class baseplate(App):
                                     "by Serene-Brew ",
                                     classes="empty-state"
                                 )
-                            with TabPane("Functions", id="tab-function-table"):
-                                yield Static(
-                                    "No firmware loaded\n\n" +
-                                    "Press Ctrl+O to load a firmware file\n" +
-                                    "for disassembly & analysis\n\n"+
-                                    "ESPionage v1.0.0\n"+
-                                    "by Serene-Brew ",
-                                    classes="empty-state"
-                                )
-                            with TabPane("Call-Signatures", id="tab-call-signatures"):
-                                yield Static(
-                                    "No firmware loaded\n\n" +
-                                    "Press Ctrl+O to load a firmware file\n" +
-                                    "for disassembly & analysis\n\n"+
-                                    "ESPionage v1.0.0\n"+
-                                    "by Serene-Brew ",
-                                    classes="empty-state"
-                                )
                             with TabPane("Strings", id="tab-strings"):
                                 yield Static(
                                     "No firmware loaded\n\n" +
@@ -391,7 +373,8 @@ class baseplate(App):
     def _update_hex_viewer_display(self, hex_output: str) -> None:
         try:
             hex_tab = self.query_one("#tab-hex-viewer")
-            
+            hex_tab.remove_children()            
+
             for child in hex_tab.children:
                 child.remove()
             
@@ -402,7 +385,7 @@ class baseplate(App):
                 auto_scroll=False
             )
             
-            # Apply syntax highlighting to hex output
+#            Apply syntax highlighting to hex output
             highlighted_hex = self.create_highlighted_hex(hex_output)
             hex_display.write(highlighted_hex)
             hex_tab.mount(hex_display)
@@ -443,11 +426,11 @@ class baseplate(App):
             if not status:
                 header_tab.mount(Static("No header found in firmware", classes="empty-state"))
                 return
-
+            rich_text = Text.from_ansi(header_output)
             scroll_container = ScrollableContainer()
             header_tab.mount(scroll_container)
 
-            static_content = Static(header_output, expand=True, markup=False)
+            static_content = Static(rich_text, expand=True, markup=False)
             scroll_container.mount(static_content)
 
         except Exception as e:
@@ -460,11 +443,11 @@ class baseplate(App):
             if not status:
                 partition_tab.mount(Static("No valid partition table found in firmware", classes="empty-state"))
                 return
-
+            rich_text = Text.from_ansi(partition_output)
             scroll_container = ScrollableContainer()
             partition_tab.mount(scroll_container)
 
-            static_content = Static(partition_output, expand=True, markup=False)
+            static_content = Static(rich_text, expand=True, markup=False)
             scroll_container.mount(static_content)
 
         except Exception as e:
@@ -477,10 +460,11 @@ class baseplate(App):
             if not status:
                 strings_tab.mount(Static("No valid string table found in firmware", classes="empty-state"))
                 return
+            rich_text = Text.from_ansi(strings_output)
             scroll_container = ScrollableContainer()
             strings_tab.mount(scroll_container)
 
-            static_content = Static(strings_output, expand=True, markup=False)
+            static_content = Static(rich_text, expand=True, markup=False)
             scroll_container.mount(static_content)
 
         except Exception as e:
@@ -493,10 +477,11 @@ class baseplate(App):
             if not status:
                 urls_tab.mount(Static("No valid URLs extracted from string table", classes="empty-state"))
                 return
+            rich_text = Text.from_ansi(urls_output)
             scroll_container = ScrollableContainer()
             urls_tab.mount(scroll_container)
 
-            static_content = Static(urls_output, expand=True, markup=False)
+            static_content = Static(rich_text, expand=True, markup=False)
             scroll_container.mount(static_content)
 
         except Exception as e:
@@ -509,10 +494,11 @@ class baseplate(App):
             if not status:
                 files_tab.mount(Static("No files were found in firmware", classes="empty-state"))
                 return
+            rich_text = Text.from_ansi(files_output)
             scroll_container = ScrollableContainer()
             files_tab.mount(scroll_container)
 
-            static_content = Static(files_output, expand=True, markup=False)
+            static_content = Static(rich_text, expand=True, markup=False)
             scroll_container.mount(static_content)
 
         except Exception as e:
