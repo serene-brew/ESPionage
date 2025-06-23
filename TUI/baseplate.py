@@ -3,8 +3,8 @@ from .utils import *
 from .espionage import *
 from ROM_rw.hex_viewer import hex_viewer # imported it here
 from parser.jump_table import *
-from parser.headers import parse_esp32_header
-from parser.partition_table import parse_esp32_partition_table
+from parser.headers import parse_esp_header
+from parser.partition_table import parse_esp_partition_table
 from parser.strings import extract_strings_from_firmware
 from parser.urls import extract_urls_from_firmware
 from parser.files import extract_files_from_firmware
@@ -311,14 +311,14 @@ class baseplate(App):
 
     def _header_worker(self, file_path: str) -> None:
         try:
-            header_output, status = parse_esp32_header(file_path)
+            header_output, status = parse_esp_header(file_path)
             self.call_from_thread(self._update_header_display, header_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error parsing headers: {str(e)}", "error")
 
     def _partition_worker(self, file_path: str) -> None:
         try:
-            partition_output, status = parse_esp32_partition_table(file_path)
+            partition_output, status = parse_esp_partition_table(file_path)
             self.call_from_thread(self._update_partition_display, partition_output, status)
         except Exception as e:
             self.call_from_thread(self.notify, f"Error parsing partition table: {str(e)}", "error")
