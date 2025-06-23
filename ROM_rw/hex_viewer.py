@@ -1,6 +1,41 @@
+"""
+Hex Viewer Utility
+
+This module provides a hex viewer utility for displaying binary files in hexadecimal format
+with ASCII representation. It's designed to help analyze firmware files, ROM dumps, and
+other binary data by presenting them in a readable hexadecimal format similar to traditional
+hex editor tools.
+
+The viewer displays data in a structured format with offset addresses, hexadecimal byte values,
+and printable ASCII characters. It handles large files efficiently by reading in chunks and
+provides error handling for various file access issues.
+
+Main features:
+- Configurable bytes per line display
+- Offset address display in hexadecimal
+- Hexadecimal byte representation with spacing
+- ASCII character display for printable characters
+- File size information and statistics
+- Error handling for file access issues
+"""
+
 import os
 
 def hex_viewer(filename, bytes_per_line=24):
+    """
+    Display binary file contents in hexadecimal format with ASCII representation.
+    
+    Reads a binary file and presents it in a traditional hex dump format with offset
+    addresses, hexadecimal byte values, and ASCII character representation. The output
+    is formatted for easy reading and analysis of binary data.
+    
+    Args:
+        filename (str): Path to the file to display in hex format
+        bytes_per_line (int, optional): Number of bytes to display per line. Defaults to 24.
+        
+    Returns:
+        str: Formatted hex dump output as a string, or error message if file cannot be read
+    """
     try:
         if not os.path.exists(filename):
             return f"Error: File '{filename}' not found!"
@@ -68,27 +103,3 @@ def hex_viewer(filename, bytes_per_line=24):
     except Exception as e:
         return f"Error: Unexpected error reading file '{filename}' - {str(e)}"
 
-# def main():
-#     filename = "firmware.bin"
-    
-#     print("ESP32 Firmware Hex Viewer")
-#     print("=" * 77)
-#     print()
-    
-#     result = hex_viewer(filename)
-    
-#     if result:
-#         print(result)
-        
-#         # output_filename = "firmware_hex_dump.txt"
-#         # try:
-#         #     with open(output_filename, 'w') as f:
-#         #         f.write(result)
-#         #     print(f"\nHex dump saved to: {output_filename}")
-#         # except Exception as e:
-#         #     print(f"Error saving to file: {e}")
-#     else:
-#         print("Failed to generate hex dump")
-
-# if __name__ == "__main__":
-#     main()
