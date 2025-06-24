@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 ESP Firmware Header Parser
 
 This module provides functionality to parse and analyze ESP32 and ESP8266 firmware headers.
