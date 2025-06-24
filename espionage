@@ -1,0 +1,99 @@
+#!/bin/python3
+import argparse
+import os
+import sys
+import subprocess
+from pathlib import Path
+from TUI.espionage import *
+
+def get_version():
+    """Read version from ~/.local/share/espionage/VERSION file"""
+    version_file = Path.home() / ".local" / "share" / "espionage" / "VERSION"
+    try:
+        with open(version_file, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "Version file not found"
+    except Exception as e:
+        return f"Error reading version: {e}"
+
+def run_uninstall():
+    """Execute the uninstall script"""
+    uninstall_script = Path.home() / ".local" / "share" / "espionage" / "uninstall.sh"
+    try:
+        if not uninstall_script.exists():
+            print(f"Error: Uninstall script not found at {uninstall_script}")
+            sys.exit(1)
+        
+        # Make sure the script is executable
+        os.chmod(uninstall_script, 0o755)
+        
+        # Execute the uninstall script
+        result = subprocess.run([str(uninstall_script)], check=True)
+        sys.exit(result.returncode)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running uninstall script: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
+
+def create_parser():
+    """Create and configure argument parser"""
+    parser = argparse.ArgumentParser(
+        prog='espionage',
+        description='ESPionage - A TUI application for ESP based firmware analysis',
+        epilog="""
+Examples:
+  espionage              Start the TUI interface
+  espionage --version    Display version information
+  espionage -v           Display version information (short form)
+  espionage --help       Show this help message
+  espionage -h           Show this help message (short form)
+  espionage --uninstall  Uninstall ESPionage from the system
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument(
+        '-v', '--version',
+        action='store_true',
+        help='Print version information'
+    )
+    
+    parser.add_argument(
+        '--uninstall',
+        action='store_true',
+        help='Execute uninstall script to remove ESPionage'
+    )
+    
+    return parser
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args()
+    
+    # Handle version flag
+    if args.version:
+        version = get_version()
+        print(version)
+        sys.exit(0)
+    
+    # Handle uninstall flag
+    if args.uninstall:
+        print("Uninstalling ESPionage...")
+        run_uninstall()
+    
+    # If no arguments provided, start the TUI
+    try:
+        app = ESPionage()
+        app.run()
+    except KeyboardInterrupt:
+        print("\nESPionage terminated by user.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error starting ESPionage: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
