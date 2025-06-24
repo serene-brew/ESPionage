@@ -55,6 +55,17 @@ Screen {
     border-top: solid $secondary;
 }
 
+.left-panel:focus-within {
+    border: round $accent-darken-1 75%;
+}
+
+.right-top:focus-within {
+    border: round $accent-darken-1 75%;
+}
+
+.right-bottom:focus-within {
+    border: round $accent-darken-1 75%;
+}
 
 Static {
     color: $text;
