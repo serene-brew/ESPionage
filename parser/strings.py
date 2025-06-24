@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 ESP Firmware String Extractor and Analyzer
 
 This module provides functionality to extract and analyze strings from ESP32 and ESP8266 firmware.

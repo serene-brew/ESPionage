@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 ESP Partition Table Parser
 
 This module provides functionality to parse and analyze ESP32 and ESP8266 firmware partition tables.
@@ -35,11 +36,9 @@ def detect_chip_type_with_base(firmware_data: bytes) -> Tuple[ChipType, int]:
     Analyzes firmware data to determine the ESP chip type using multiple heuristics
     including string analysis and size-based detection.
     
-    Args:
-        firmware_data (bytes): Raw firmware binary data
+    @args: firmware_data (bytes): Raw firmware binary data
         
-    Returns:
-        Tuple[ChipType, int]: A tuple containing the detected chip type and base address
+    @return: Tuple[ChipType, int]: A tuple containing the detected chip type and base address
     """
     size = len(firmware_data)
     

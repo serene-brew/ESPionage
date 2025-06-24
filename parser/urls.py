@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 ESP Firmware URL Extractor
 
 This module provides functionality to extract and analyze URLs from ESP32 and ESP8266 firmware.
