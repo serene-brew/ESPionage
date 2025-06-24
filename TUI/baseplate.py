@@ -17,6 +17,7 @@ from io import StringIO
 class baseplate(App):
     CSS_PATH = ["../layout/style.tcss", "../layout/disasm_textarea.tcss"]
     BINDINGS = [
+        ("?", "show_help", "Help"),
         ("ctrl+q", "quit", "Quit"),
         ("ctrl+o", "show_file_select_screen", "Open Firmware"),
         ("ctrl+d", "focus_disassembler", "Focus Disassembler"),
@@ -44,6 +45,11 @@ class baseplate(App):
         left_panel.mount(empty_message)
 
         custom_theme = DisasmTextAreaTheme()
+    
+    def action_show_help(self) -> None:
+        """Show help screen with keybinds and introduction"""
+        self.push_screen(HelpScreen())
+        
     def action_quit(self) -> None:
         os.system('reset')
         os._exit(0)
