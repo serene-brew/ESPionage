@@ -66,7 +66,7 @@ class FileSelectScreen(ModalScreen):
     
     def compose(self) -> ComposeResult:
         with Container(classes="file-select-container"):
-            yield Label("Select a firmware file to disassemble:", classes="file-select-message")
+            yield Label("Press 'h' to toggle hidden directories\nSelect a firmware file to disassemble:", classes="file-select-message")
             yield ToggleableDirectoryTree(path=Path.home(), classes="file-tree")
     
     def on_mount(self):
