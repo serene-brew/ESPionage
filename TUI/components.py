@@ -1,5 +1,6 @@
 from .globals import *
-
+from pathlib import Path
+from typing import Iterable
 class DisasmTextAreaTheme(TextAreaTheme):
     def __init__(self):
         super().__init__(name="disasm")
@@ -36,6 +37,26 @@ class DisasmTextAreaTheme(TextAreaTheme):
         
         return highlights
 
+class ToggleableDirectoryTree(DirectoryTree):
+    
+    BINDINGS = [
+        Binding("h", "toggle_hidden", "Toggle Hidden", show=True),
+    ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.show_hidden = False
+    
+    def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
+        if self.show_hidden:
+            return paths
+        else:
+            return [path for path in paths if not path.name.startswith(".")]
+    
+    def action_toggle_hidden(self):
+        self.show_hidden = not self.show_hidden
+        self.reload()
+
 class FileSelectScreen(ModalScreen):
     
     CSS_PATH = "../layout/file_select_screen.tcss"
@@ -46,9 +67,9 @@ class FileSelectScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         with Container(classes="file-select-container"):
             yield Label("Select a firmware file to disassemble:", classes="file-select-message")
-            yield DirectoryTree(path=".", classes="file-tree")
+            yield ToggleableDirectoryTree(path=Path.home(), classes="file-tree")
     
-    def on_mount(self) -> None:
+    def on_mount(self):
         container = self.query_one(".file-select-container")
         container.border_title = "Select Firmware File"
     
