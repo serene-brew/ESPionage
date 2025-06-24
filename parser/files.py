@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 ESP Firmware File Path Extractor
 
 This module provides functionality to extract and analyze file paths from ESP32 and ESP8266 firmware.
