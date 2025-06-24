@@ -1,4 +1,33 @@
-#!/usr/bin/env python3
+"""
+Author: Debjeet Banerjee (mintRaven-05)
+ESP Firmware Jump Table Analyzer
+
+This module provides comprehensive functionality to detect and analyze jump tables
+in ESP32 and ESP8266 firmware binaries. It combines static analysis techniques
+with Xtensa architecture-specific disassembly to identify switch-case constructs
+and indirect jump patterns commonly found in compiled code.
+
+Main features:
+- Automatic chip type detection with entropy and instruction pattern analysis
+- Enhanced Xtensa disassembler with architecture-specific optimizations
+- L32R instruction sequence detection and analysis
+- Advanced jump table validation with confidence scoring
+- Context-aware instruction analysis for switch statement detection
+- Standalone address array discovery
+- Colored terminal output with hex dump visualization
+- Gap tolerance and clustering analysis for robust detection
+
+The analyzer uses multiple heuristics including:
+- Branch density analysis around L32R sequences
+- Address clustering and range validation
+- Instruction context analysis for switch-like patterns
+- Memory region validation for code/data addresses
+- Statistical confidence scoring for entry validation
+
+Supported architectures:
+- ESP32 (Xtensa LX6)
+- ESP8266 (Xtensa LX106)
+"""
 import struct
 import sys
 import argparse
@@ -33,12 +62,28 @@ class JumpTable:
     confidence: float
     detection_method: str
     entry_size: int = 4
-    gaps: List[int] = None  # Positions where gaps were found
+    gaps: List[int] = None
 
 class ChipDetector:
     
     @staticmethod
     def detect_chip_type(firmware_data: bytes) -> Tuple[ChipType, int, dict]:
+        """
+        Enhanced chip detection using multiple analysis techniques.
+        
+        Analyzes firmware data using entropy calculation, instruction patterns,
+        string analysis, and memory layout heuristics to determine the ESP chip type.
+        Provides detailed analysis information for debugging and validation.
+        
+        Args:
+            firmware_data (bytes): Raw firmware binary data to analyze
+            
+        Returns:
+            Tuple[ChipType, int, dict]: A tuple containing:
+                - ChipType: Detected chip type (ESP32, ESP8266, or UNKNOWN)
+                - int: Base memory address for the detected chip
+                - dict: Detailed analysis information including entropy, patterns, and heuristics
+        """
         analysis = {
             'size': len(firmware_data),
             'entropy': ChipDetector._calculate_entropy(firmware_data[:1024]),
@@ -105,10 +150,10 @@ class ChipDetector:
                 instr = struct.unpack('<H', firmware_data[i:i+2])[0]
                 patterns['total_instructions'] += 1
                 
-                if (instr & 0xFF0F) == 0x0004:  # More complex addressing modes
+                if (instr & 0xFF0F) == 0x0004:
                     patterns['esp32_indicators'] += 1
                 
-                if (instr & 0xF00F) == 0x1000:  # Simpler branch patterns
+                if (instr & 0xF00F) == 0x1000:
                     patterns['esp8266_indicators'] += 1
                     
             except struct.error:
@@ -150,8 +195,7 @@ class ChipDetector:
             try:
                 word = struct.unpack('<H', firmware_data[i:i+2])[0]
                 if word != 0 and word != 0xFFFF:
-                    # Check if it looks like an instruction
-                    if (word & 0x000F) in [0x0000, 0x0001, 0x0002]:  # Common Xtensa opcodes
+                    if (word & 0x000F) in [0x0000, 0x0001, 0x0002]:
                         code_patterns += 1
             except:
                 continue
@@ -208,6 +252,21 @@ class EnhancedXtensaDisassembler:
         return None
 
     def analyze_instruction_context(self, firmware_data: bytes, offset: int, window: int = 40) -> dict:
+        """
+        Analyze instruction context around a given offset for switch-like patterns.
+
+        Examines instruction patterns in a window around the specified offset to
+        identify characteristics typical of switch statement implementations,
+        including branch density and instruction type distribution.
+
+        Args:
+            firmware_data (bytes): Raw firmware binary data
+            offset (int): Offset to analyze context around
+            window (int, optional): Analysis window size in bytes. Defaults to 40.
+
+        Returns:
+            dict: Context analysis results including instruction counts and branch density
+        """
         context = {
             'l32r_count': 0,
             'jump_count': 0,
@@ -379,7 +438,7 @@ class EnhancedJumpTableFinder:
                 avg_diff = statistics.mean(addr_diffs)
                 expected_addr = existing_addresses[-1] + avg_diff
                 if abs(address - expected_addr) < avg_diff * 0.5:
-                    confidence *= 1.2  # Bonus for following pattern
+                    confidence *= 1.2
         
         return min(confidence, 1.0)
 
@@ -397,11 +456,11 @@ class EnhancedJumpTableFinder:
         # else:
         #     return None
   
-        if len(entries) >= 4:  # Changed from 2 to 4
+        if len(entries) >= 4:
             validation_score += 0.3
             reasons.append("sufficient_entries")
         elif len(entries) >= 2:
-            validation_score += 0.1  # Lower score for small tables
+            validation_score += 0.1 
             reasons.append("minimal_entries")
         else:
             return None
@@ -427,7 +486,7 @@ class EnhancedJumpTableFinder:
                 reasons.append("loose_clustering")
         
         context = self.disasm.analyze_instruction_context(self.firmware_data, l32r_offset)
-        if context['branch_density'] > 0.3:  # High branch density indicates switch-like code
+        if context['branch_density'] > 0.3:
             validation_score += 0.15
             reasons.append("high_branch_density")
         
@@ -463,6 +522,18 @@ class EnhancedJumpTableFinder:
         )
     
     def find_jump_tables_enhanced(self) -> Tuple[List[JumpTable], str]:
+        """
+        Comprehensive jump table detection using enhanced analysis techniques.
+
+        Performs multi-pass analysis to detect jump tables using L32R instruction
+        sequences, context analysis, and standalone address array detection.
+        Combines multiple detection methods for maximum coverage.
+
+        Returns:
+            Tuple[List[JumpTable], str]: A tuple containing:
+                - List[JumpTable]: Detected jump tables sorted by confidence
+                - str: Detailed analysis output with detection statistics
+        """
         analysis_output = []
         analysis_output.append("\033[38;5;169m==============================================================================================\033[0m")
         analysis_output.append(f"\033[38;5;72mAnalyzing firmware: {len(self.firmware_data)} bytes ({self.chip_type.value})")
@@ -558,14 +629,14 @@ class EnhancedJumpTableFinder:
     def find_standalone_address_arrays(self) -> List[JumpTable]:
         standalone_tables = []
         
-        for offset in range(0, len(self.firmware_data) - 16, 4):  # 4-byte aligned
-            if offset % 1000 == 0:  # Progress indicator for large files
+        for offset in range(0, len(self.firmware_data) - 16, 4):
+            if offset % 1000 == 0:
                 continue
                 
             consecutive_valid = 0
             addresses = []
             
-            for i in range(8):  # Check up to 8 consecutive addresses
+            for i in range(8):
                 word_offset = offset + (i * 4)
                 word = self.read_word(word_offset)
                 
@@ -594,7 +665,7 @@ class EnhancedJumpTableFinder:
                             table_register="unknown",
                             index_register="unknown",
                             switch_instruction_offset=-1,
-                            confidence=stats['confidence_score'] * 0.8,  # Slightly lower confidence
+                            confidence=stats['confidence_score'] * 0.8,
                             detection_method="standalone_array",
                             gaps=stats['gaps'] if stats['gaps'] else None
                         )
@@ -640,6 +711,19 @@ class EnhancedJumpTableFinder:
         return "\n".join(hex_lines)
 
     def print_enhanced_results(self) -> Tuple[str, int]:
+        """
+        Generate formatted analysis results with colored terminal output.
+
+        Creates comprehensive formatted output showing all detected jump tables
+        with detailed information including memory addresses, confidence scores,
+        hex dumps, and target addresses. Uses ANSI color codes for enhanced
+        terminal visualization.
+
+        Returns:
+            Tuple[str, int]: A tuple containing:
+                - str: Formatted analysis output with ANSI color codes
+                - int: Status code (1 for success with results, 0 for no results)
+        """
         status = 1
         output_lines = []
 
@@ -682,7 +766,7 @@ class EnhancedJumpTableFinder:
                             entry = jt.entries[idx]
                             line_parts.append(f"[{idx:2d}] 0x{entry.target_address:08X}")
                         else:
-                            line_parts.append("")  # Empty space for alignment
+                            line_parts.append("")
 
                     if any(part.strip() for part in line_parts):
                         formatted_line = "  " + "".join(f"{part:<20}" for part in line_parts)
@@ -692,6 +776,21 @@ class EnhancedJumpTableFinder:
         return "\n".join(output_lines), status
 
 def ShowJumpTables(firmware_path) -> Tuple[str, int]:
+    """
+    Main entry point for jump table analysis of ESP firmware files.
+    
+    Performs complete analysis of an ESP firmware file including chip detection,
+    jump table discovery, validation, and formatted output generation.
+    Handles file I/O and error conditions gracefully.
+    
+    Args:
+        firmware_path (str): Path to the firmware file to analyze
+        
+    Returns:
+        Tuple[str, int]: A tuple containing:
+            - str: Complete analysis output or error message
+            - int: Status code (1 for success, 0 for failure)
+    """
     try:
         with open(firmware_path, 'rb') as f:
             firmware_data = f.read()
