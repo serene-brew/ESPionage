@@ -229,10 +229,8 @@ def chip_id(esp, args):
 
 
 def erase_flash(esp, args):
-    #print('Erasing flash (this may take a while)...')
     t = time.time()
     esp.erase_flash()
-    #print('Chip erase completed successfully in %.1fs' % (time.time() - t))
 
 
 def erase_region(esp, args):
@@ -414,7 +412,7 @@ class AddrFilenamePairAction(argparse.Action):
 
         end = 0
         for address, argfile in sorted(pairs):
-            argfile.seek(0,2)  # seek to end
+            argfile.seek(0,2)
             size = argfile.tell()
             argfile.seek(0)
             sector_start = address & ~(ESPLoader.FLASH_SECTOR_SIZE - 1)
