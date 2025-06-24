@@ -1,4 +1,5 @@
 """
+Author: Imon Chakraborty (RiserSama)
 Hex Viewer Utility
 
 This module provides a hex viewer utility for displaying binary files in hexadecimal format
